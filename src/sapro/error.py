@@ -21,3 +21,6 @@ class Cycle(LPError):
 
 class NumericalFailure(LPError):
     'The simplex calculation became numerically unsafe.'
+
+class IterationLimit(LPError):
+    'The simplex iteration limit was reached before termination.'

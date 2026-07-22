@@ -8,9 +8,13 @@ from io import StringIO
 from typing import Sequence, Iterator, Generator, TypedDict
 import numpy as np
 
-__all__ = ['LPStep', 'ExtraData', 'LPResult', 'FormattedConstraint', 'Simplex', 'DEFAULT_EPSILON']
+__all__ = [
+    'LPStep', 'ExtraData', 'LPResult', 'FormattedConstraint', 'Simplex',
+    'DEFAULT_EPSILON', 'DEFAULT_MAX_ITERATIONS',
+]
 
 DEFAULT_EPSILON = 1e-9
+DEFAULT_MAX_ITERATIONS = 10_000
 
 class FormattedConstraint(TypedDict):
     '''
@@ -149,7 +153,8 @@ class Simplex:
                  maximize: bool = False,
                  slack_var_generator: Iterator[Variable] | None = None,
                  slack_var_prefix: str = 's',
-                 epsilon: float = DEFAULT_EPSILON):
+                 epsilon: float = DEFAULT_EPSILON,
+                 max_iterations: int = DEFAULT_MAX_ITERATIONS):
         '''
         Initializes Simplex Algorithm.
 
@@ -177,8 +182,12 @@ class Simplex:
             Ignored if `slack_var_generator` is specified.
         epsilon:
             Numerical tolerance for pivot and optimality comparisons.
+        max_iterations:
+            Maximum pivot operations allowed per ``two_phase`` (Phase I) or
+            ``solve`` (Phase II primal plus dual repair) invocation.
         '''
         self.epsilon = self._validate_epsilon(epsilon)
+        self.max_iterations = self._validate_max_iterations(max_iterations)
         self.target = target
         self.constraints = list(constraints)
         self.base_vars = None if bvs is None else list(bvs)
@@ -247,6 +256,27 @@ class Simplex:
         if epsilon <= 0:
             raise ValueError('epsilon must be positive')
         return epsilon
+    @staticmethod
+    def _validate_max_iterations(max_iterations: int) -> int:
+        if isinstance(max_iterations, bool):
+            raise ValueError('max_iterations must be a positive integer')
+        if type(max_iterations) is not int:
+            raise ValueError('max_iterations must be a positive integer')
+        if max_iterations <= 0:
+            raise ValueError('max_iterations must be a positive integer')
+        return max_iterations
+    def _check_pivot_limit(self, phase: str, completed_pivots: int) -> None:
+        '''
+        Raise ``IterationLimit`` before starting pivot ``completed_pivots + 1``.
+
+        Each ``two_phase`` and ``solve`` call uses a fresh local pivot counter.
+        Initial tableau construction is not counted.
+        '''
+        if completed_pivots >= self.max_iterations:
+            raise IterationLimit(
+                f'{phase} exceeded iteration limit after {completed_pivots} '
+                f'pivots (max_iterations={self.max_iterations})'
+            )
     def _is_zero(self, value: Real) -> bool:
         return abs(float(value)) <= self.epsilon
     def _is_positive(self, value: Real) -> bool:
@@ -603,6 +633,8 @@ class Simplex:
             If base variables are already set.
         sapro.error.Cycle:
             If cycles appear while iterating.
+        sapro.error.IterationLimit:
+            If Phase I exceeds ``max_iterations`` pivot operations.
         
         Returns
         -------
@@ -650,12 +682,14 @@ class Simplex:
         
         base_var_memo = set()
         base_var_memo.add(frozenset(base_vars))
+        pivot_count = 0
 
         # algorithm step
         while True:
             enter_index = self._select_entering_var(sigma[:-M], False)
             if enter_index is None:
                 break
+            self._check_pivot_limit('Phase I', pivot_count)
             leave_index, _ratios = self._primal_ratio_test(data, rhs, enter_index)
             if leave_index is None:
                 raise Boundless('unbounded problem')
@@ -663,6 +697,7 @@ class Simplex:
             ratio = self._apply_pivot(data, sigma, rhs, enter_index, leave_index, M)
             z -= rhs[leave_index] * ratio
             base_vars[leave_index] = variables[enter_index]
+            pivot_count += 1
 
             yield LPStep(
                 tableau=Tableau(
@@ -746,6 +781,8 @@ class Simplex:
             - The number of base variables doesn't match the number of constraints.
         sapro.error.Cycle:
             If cycles appear while iterating.
+        sapro.error.IterationLimit:
+            If Phase II exceeds ``max_iterations`` pivot operations.
         
         Returns
         -------
@@ -782,12 +819,14 @@ class Simplex:
         
         base_var_memo = set()
         base_var_memo.add(frozenset(self.base_vars))
+        pivot_count = 0
 
         # algorithm step
         while True:
             enter_index = self._select_entering_var(sigma, self.maximize)
             if enter_index is None:
                 break
+            self._check_pivot_limit('Phase II', pivot_count)
             leave_index, _ratios = self._primal_ratio_test(data, rhs, enter_index)
             if leave_index is None:
                 raise Boundless('unbounded problem')
@@ -795,6 +834,7 @@ class Simplex:
             ratio = self._apply_pivot(data, sigma, rhs, enter_index, leave_index, M)
             z -= rhs[leave_index] * ratio
             self.base_vars[leave_index] = self.variables[enter_index]
+            pivot_count += 1
             
             yield LPStep(
                 tableau=Tableau(
@@ -817,6 +857,7 @@ class Simplex:
             leave_index = self._select_leaving_var(rhs)
             if leave_index is None:
                 break
+            self._check_pivot_limit('Phase II dual repair', pivot_count)
             leave_var = self.base_vars[leave_index]
             enterable = np.array([
                 self._is_negative(value) for value in data[leave_index]
@@ -866,6 +907,7 @@ class Simplex:
             self._ensure_finite_array(sigma, 'reduced costs became non-finite after dual pivot')
             self._ensure_finite_array(rhs, 'rhs became non-finite after dual pivot')
             self.base_vars[leave_index] = self.variables[enter_index]
+            pivot_count += 1
             
             yield LPStep(
                 tableau=Tableau(
