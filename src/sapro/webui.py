@@ -28,6 +28,13 @@ STATIC_CONTENT_TYPES = {
 _PACKAGE_DIR = os.path.dirname(__file__)
 _STATIC_DIR = os.path.join(_PACKAGE_DIR, 'static')
 
+INTERNAL_ERROR_RESPONSE = {
+    'ok': False,
+    'status': 'internal_error',
+    'error_type': 'InternalError',
+    'message': 'An unexpected internal error occurred while solving the problem.',
+}
+
 
 class WebUIValidationError(ValueError):
     'Raised when the coefficient-table request payload is invalid.'
@@ -149,6 +156,14 @@ def parse_coefficient_request(body: bytes) -> dict:
     }
 
 
+def _slack_var_generator(num_decision_vars: int):
+    '''
+    Return a fresh infinite slack/surplus generator that cannot collide with
+    decision variables named x1..xn.
+    '''
+    return Variable.sequence('s', start=num_decision_vars + 1)
+
+
 def build_simplex_problem(request: dict) -> Simplex:
     variables = [Variable(f'x{index}') for index in range(1, len(request['objective']) + 1)]
     var_map = {f'x{index}': variables[index - 1] for index in range(1, len(variables) + 1)}
@@ -165,7 +180,7 @@ def build_simplex_problem(request: dict) -> Simplex:
         }
         constraints.append(Constraint(coef_map, row['rhs'], row['operator']))
 
-    slack_gen = Variable.sequence('s', len(variables) + 1)
+    slack_gen = _slack_var_generator(len(variables))
     return Simplex(
         objective,
         *constraints,
@@ -201,11 +216,48 @@ def encode_step(index: int, step: LPStep) -> dict:
 
 
 def solve_coefficient_request(request: dict) -> dict:
-    problem = build_simplex_problem(request)
-    steps: list[LPStep] = []
     try:
-        for step in problem.solve():
-            steps.append(step)
+        problem = build_simplex_problem(request)
+        steps: list[LPStep] = []
+        try:
+            for step in problem.solve():
+                steps.append(step)
+        except LPError as error:
+            status, error_type, message = map_lp_error(error)
+            return {
+                'ok': False,
+                'status': status,
+                'error_type': error_type,
+                'message': message,
+            }
+
+        result = problem.result
+        if result is None:
+            return {
+                'ok': False,
+                'status': 'error',
+                'error_type': 'SolverError',
+                'message': 'The solver did not produce a result.',
+            }
+
+        decision_values = {
+            variable.name: value
+            for variable, value in result.variable_values.items()
+            if variable.name.startswith('x')
+        }
+
+        return {
+            'ok': True,
+            'status': 'optimal',
+            'status_label': 'Optimal solution found.',
+            'objective_value': result.target_value,
+            'variable_values': decision_values,
+            'step_count': len(steps),
+            'steps': [
+                encode_step(index, step)
+                for index, step in enumerate(steps, start=1)
+            ],
+        }
     except LPError as error:
         status, error_type, message = map_lp_error(error)
         return {
@@ -214,34 +266,8 @@ def solve_coefficient_request(request: dict) -> dict:
             'error_type': error_type,
             'message': message,
         }
-
-    result = problem.result
-    if result is None:
-        return {
-            'ok': False,
-            'status': 'error',
-            'error_type': 'SolverError',
-            'message': 'The solver did not produce a result.',
-        }
-
-    decision_values = {
-        variable.name: value
-        for variable, value in result.variable_values.items()
-        if variable.name.startswith('x')
-    }
-
-    return {
-        'ok': True,
-        'status': 'optimal',
-        'status_label': 'Optimal solution found.',
-        'objective_value': result.target_value,
-        'variable_values': decision_values,
-        'step_count': len(steps),
-        'steps': [
-            encode_step(index, step)
-            for index, step in enumerate(steps, start=1)
-        ],
-    }
+    except Exception:
+        return dict(INTERNAL_ERROR_RESPONSE)
 
 
 def application(environ, start_response):
@@ -283,6 +309,8 @@ def application(environ, start_response):
                 'error_type': 'ValidationError',
                 'message': str(error),
             }
+        except Exception:
+            payload = dict(INTERNAL_ERROR_RESPONSE)
         return _json_response(start_response, HTTPStatus.OK, payload)
 
     start_response(_http_status_line(HTTPStatus.NOT_FOUND), [])

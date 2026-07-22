@@ -7,15 +7,90 @@ from __future__ import annotations
 import json
 import math
 from io import BytesIO
+from unittest.mock import patch
 
 import pytest
 
 from sapro.webui import (
     WebUIValidationError,
     application,
+    build_simplex_problem,
     parse_coefficient_request,
     solve_coefficient_request,
 )
+
+
+BUILTIN_EXAMPLES = {
+    'readme': {
+        'optimization': 'max',
+        'objective': [1, 2],
+        'constraints': [
+            {'coefficients': [1, 1], 'operator': '<=', 'rhs': 4},
+            {'coefficients': [-2, 1], 'operator': '<=', 'rhs': 1},
+            {'coefficients': [1, 0], 'operator': '<=', 'rhs': 3},
+        ],
+    },
+    'minimization': {
+        'optimization': 'min',
+        'objective': [1, 1],
+        'constraints': [{'coefficients': [1, 1], 'operator': '>=', 'rhs': 4}],
+    },
+    'ge': {
+        'optimization': 'max',
+        'objective': [1],
+        'constraints': [
+            {'coefficients': [1], 'operator': '>=', 'rhs': 1},
+            {'coefficients': [1], 'operator': '<=', 'rhs': 5},
+        ],
+    },
+    'equality': {
+        'optimization': 'max',
+        'objective': [1, 1],
+        'constraints': [{'coefficients': [1, 1], 'operator': '==', 'rhs': 4}],
+    },
+    'mixed': {
+        'optimization': 'max',
+        'objective': [1, 2],
+        'constraints': [
+            {'coefficients': [1, 0], 'operator': '<=', 'rhs': 4},
+            {'coefficients': [0, 1], 'operator': '>=', 'rhs': 1},
+            {'coefficients': [1, 1], 'operator': '==', 'rhs': 3},
+        ],
+    },
+    'negative_rhs': {
+        'optimization': 'max',
+        'objective': [1],
+        'constraints': [
+            {'coefficients': [1], 'operator': '>=', 'rhs': -5},
+            {'coefficients': [1], 'operator': '<=', 'rhs': 3},
+        ],
+    },
+    'infeasible': {
+        'optimization': 'max',
+        'objective': [1, 1],
+        'constraints': [
+            {'coefficients': [1, 0], 'operator': '>=', 'rhs': 5},
+            {'coefficients': [0, 1], 'operator': '>=', 'rhs': 5},
+            {'coefficients': [1, 1], 'operator': '<=', 'rhs': 1},
+        ],
+    },
+    'unbounded': {
+        'optimization': 'max',
+        'objective': [1, 1],
+        'constraints': [
+            {'coefficients': [1, 0], 'operator': '>=', 'rhs': 1},
+            {'coefficients': [0, 1], 'operator': '>=', 'rhs': 2},
+        ],
+    },
+    'decimal': {
+        'optimization': 'max',
+        'objective': [2.5, 1.5],
+        'constraints': [
+            {'coefficients': [1.5, 1], 'operator': '<=', 'rhs': 4},
+            {'coefficients': [1, 0], 'operator': '<=', 'rhs': 2},
+        ],
+    },
+}
 
 
 def _call_wsgi(method: str, path: str, body: bytes | None = None) -> tuple[int, dict[str, str], bytes]:
@@ -294,3 +369,101 @@ def test_solve_coefficient_request_direct_helper():
     ))
     assert result['ok'] is True
     assert math.isclose(result['objective_value'], 7.0)
+
+
+# ---------------------------------------------------------------------------
+# Variable-generator regression
+# ---------------------------------------------------------------------------
+
+
+def test_slack_generator_starts_after_decision_variables():
+    problem = build_simplex_problem(BUILTIN_EXAMPLES['readme'])
+    first_slack = next(problem.slack_var_generator)
+    assert first_slack.name == 's3'
+
+
+def test_more_constraints_than_old_generator_limit_succeeds():
+    payload = {
+        'optimization': 'max',
+        'objective': [1, 2],
+        'constraints': [
+            {'coefficients': [1, 0], 'operator': '<=', 'rhs': 1},
+            {'coefficients': [0, 1], 'operator': '<=', 'rhs': 1},
+            {'coefficients': [1, 1], 'operator': '<=', 'rhs': 2},
+            {'coefficients': [1, -1], 'operator': '<=', 'rhs': 1},
+        ],
+    }
+    status, _, body = _call_wsgi('POST', '/api/solve', json.dumps(payload).encode('utf-8'))
+    assert status == 200
+    result = json.loads(body.decode('utf-8'))
+    assert result['ok'] is True
+
+
+@pytest.mark.parametrize('example_name', list(BUILTIN_EXAMPLES))
+def test_all_builtin_examples_return_http_200_via_wsgi(example_name):
+    status, _, body = _call_wsgi(
+        'POST',
+        '/api/solve',
+        json.dumps(BUILTIN_EXAMPLES[example_name]).encode('utf-8'),
+    )
+    assert status == 200
+    result = json.loads(body.decode('utf-8'))
+    assert 'ok' in result
+    assert 'status' in result
+
+
+def test_all_builtin_examples_run_sequentially_in_one_process():
+    for _round in range(2):
+        for example in BUILTIN_EXAMPLES.values():
+            result = _post_solve(example)
+            assert 'ok' in result
+
+
+def test_equality_example_can_be_repeated():
+    payload = BUILTIN_EXAMPLES['equality']
+    for _ in range(3):
+        result = _post_solve(payload)
+        assert result['ok'] is True
+        assert math.isclose(result['objective_value'], 4.0)
+
+
+def test_mixed_example_can_be_repeated():
+    payload = BUILTIN_EXAMPLES['mixed']
+    for _ in range(3):
+        result = _post_solve(payload)
+        assert result['ok'] is True
+        assert math.isclose(result['objective_value'], 6.0)
+
+
+def test_each_request_gets_fresh_slack_generator():
+    first = build_simplex_problem(BUILTIN_EXAMPLES['equality'])
+    second = build_simplex_problem(BUILTIN_EXAMPLES['equality'])
+    assert first.slack_var_generator is not second.slack_var_generator
+    assert next(first.slack_var_generator).name == 's3'
+    assert next(second.slack_var_generator).name == 's3'
+
+
+def test_automatic_phase_one_via_web_api():
+    result = _post_solve(BUILTIN_EXAMPLES['mixed'])
+    assert result['ok'] is True
+    assert result['step_count'] >= 1
+
+
+def test_unexpected_internal_error_returns_controlled_json():
+    payload = _solve_payload()
+
+    def explode(_self):
+        raise RuntimeError('boom')
+
+    with patch('sapro.webui.Simplex.solve', explode):
+        status, _, body = _call_wsgi('POST', '/api/solve', json.dumps(payload).encode('utf-8'))
+
+    assert status == 200
+    result = json.loads(body.decode('utf-8'))
+    assert result['ok'] is False
+    assert result['status'] == 'internal_error'
+    assert result['error_type'] == 'InternalError'
+    assert 'unexpected internal error' in result['message'].lower()
+    assert 'Traceback' not in json.dumps(result)
+    assert 'webui.py' not in json.dumps(result)
+    assert 'src/' not in json.dumps(result)
