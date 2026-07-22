@@ -132,22 +132,26 @@ def test_ge_constraint_two_phase_finds_feasible_basis(var_gen):
     assert math.isclose(values["x2"], 2.0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known bug: Phase II after two_phase raises Boundless('encountered cycle') "
-        "for >= constraints even when Phase I succeeded."
-    ),
-)
 def test_ge_constraint_phase_two_after_two_phase(var_gen):
     """
     After successful two_phase, solve() should optimize to z = 3.
+
+    Problem:
+        max  x1 + x2
+        s.t. x1 >= 1
+             x2 >= 2
+             x1 <= 1
+             x2 <= 2
+
+    Upper bounds force the optimum at (1, 2) with z = 3.
     """
     x1, x2 = next(var_gen), next(var_gen)
     problem = Simplex(
         x1 + x2,
         x1 >= 1,
         x2 >= 2,
+        x1 <= 1,
+        x2 <= 2,
         maximize=True,
         slack_var_generator=var_gen,
     )
@@ -157,6 +161,9 @@ def test_ge_constraint_phase_two_after_two_phase(var_gen):
 
     assert problem.result is not None
     assert math.isclose(problem.result.target_value, 3.0)
+    values = _var_values(problem.result, "x1", "x2")
+    assert math.isclose(values["x1"], 1.0)
+    assert math.isclose(values["x2"], 2.0)
 
 
 def test_ge_constraint_without_two_phase_raises_boundless(var_gen):

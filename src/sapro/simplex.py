@@ -181,6 +181,8 @@ class Simplex:
         self.result = None
         self._num_slack_vars = 0
         self._rhs_normalized = False
+        self._slack_canonicalized = False
+        self._phase_one_done = False
         if vs is None:
             variables = set()
             for c in constraints:
@@ -350,12 +352,15 @@ class Simplex:
             Number of slack variables used.
         '''
         self._ensure_normalized_rhs()
+        if self._slack_canonicalized:
+            return self._num_slack_vars
         for c in self.constraints:
             if not c.is_canonical:
                 self._num_slack_vars += 1
                 v = next(self.slack_var_generator)
                 c.canonicalize(v)
                 self.variables.append(v)
+        self._slack_canonicalized = True
         return self._num_slack_vars
     def format_constraints(self, precision: int | None = None) -> list[FormattedConstraint]:
         '''
@@ -406,7 +411,25 @@ class Simplex:
                 raise InvalidBase('cannot determine base variables')
         elif len(self.base_vars) != len(self.constraints):
             raise InvalidBase('number of base variables doesn\'t match number of constraints')
-    def _init_matrices(self, 
+    def _prepare_phase_two(self):
+        '''
+        Validate state after a successful ``two_phase`` call before Phase II.
+
+        Skips slack introduction because constraints are already in canonical
+        form and ``self.base_vars`` holds the Phase I feasible basis.
+        '''
+        self._ensure_normalized_rhs()
+        M = len(self.constraints)
+        if M <= 0:
+            raise Unsolvable('constraints is empty')
+        if self.base_vars is None:
+            raise InvalidBase('cannot determine base variables')
+        if len(self.base_vars) != M:
+            raise InvalidBase('number of base variables doesn\'t match number of constraints')
+        for base_var in self.base_vars:
+            if base_var not in self.variables:
+                raise InvalidBase(f'base variable {base_var!s} is not in the problem')
+    def _init_matrices(self,
                        constraints: Sequence[Constraint], 
                        variables: Sequence[Variable], 
                        target: Expression, 
@@ -513,6 +536,7 @@ class Simplex:
         self._prepare(False)
         if self.base_vars is not None:
             raise BaseAlreadySet('base variables already set')
+        self._phase_one_done = False
         artificial_vars = list(Variable.sequence(artificial_var_prefix, len(self.constraints)))
         base_vars = artificial_vars.copy()
         variables = self.variables.copy()
@@ -592,6 +616,7 @@ class Simplex:
                 )
                 base_vars.remove(avar)
         self.set_base_vars(base_vars)
+        self._phase_one_done = True
 
         cT = np.zeros(len(self.variables))
         for var, coef in self.target.coefficients.items():
@@ -651,7 +676,7 @@ class Simplex:
         tableau_gen:
             A generator, which yields at each algorithm step with the simplex table.
         '''
-        self._prepare(True)
+        self._prepare(True) if not self._phase_one_done else self._prepare_phase_two()
 
         # check variables
         M = len(self.constraints)
