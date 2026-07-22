@@ -585,7 +585,7 @@ def parse_variable(value: str, default: str | None) -> tuple[str, int]:
     prefix, index:
         The parsed result.
     '''
-    pattern = '^(.+?)(\d+)$'
+    pattern = r'^(.+?)(\d+)$'
     matches = re.match(pattern, value)
     if matches is None:
         if default is None:

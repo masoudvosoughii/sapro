@@ -11,6 +11,17 @@ dependencies = [
     "numpy",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "default::RuntimeWarning:sapro.simplex",
+]
+
 [project.urls]
 source = "https://github.com/origamizyt/sapro"
 
