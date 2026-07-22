@@ -15,3 +15,6 @@ class Unsolvable(LPError):
 
 class Boundless(LPError):
     'A LP problem has an unbounded solution.'
+
+class Cycle(LPError):
+    'The simplex algorithm encountered a cycling basis.'

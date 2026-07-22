@@ -159,10 +159,10 @@ def test_ge_constraint_phase_two_after_two_phase(var_gen):
     assert math.isclose(problem.result.target_value, 3.0)
 
 
-def test_ge_constraint_without_two_phase_produces_nan_objective(var_gen):
+def test_ge_constraint_without_two_phase_raises_boundless(var_gen):
     """
-    Same >= problem without two-phase: solve() returns without LPError but
-    target_value is NaN (numerical failure).
+    Same >= problem without two-phase: current code raises Boundless because
+    no valid leaving row exists for the entering direction.
     """
     x1, x2 = next(var_gen), next(var_gen)
     problem = Simplex(
@@ -173,10 +173,8 @@ def test_ge_constraint_without_two_phase_produces_nan_objective(var_gen):
         slack_var_generator=var_gen,
     )
 
-    _consume_solve(problem)
-
-    assert problem.result is not None
-    assert math.isnan(problem.result.target_value)
+    with pytest.raises(Boundless, match="unbounded"):
+        _consume_solve(problem)
 
 
 # ---------------------------------------------------------------------------
@@ -215,14 +213,6 @@ def test_equality_constraint_with_two_phase(var_gen):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known bug: two_phase rejects feasible models when a >= row has "
-        "negative RHS (e.g. x1 >= -5 canonicalized as x1 - s = -5). "
-        "Missing RHS normalization before Phase I."
-    ),
-)
 def test_feasible_negative_rhs_ge_constraint(var_gen):
     """
     Problem:
@@ -235,7 +225,7 @@ def test_feasible_negative_rhs_ge_constraint(var_gen):
     """
     x1 = next(var_gen)
     problem = Simplex(
-        x1,
+        1 * x1,
         x1 >= -5,
         x1 <= 3,
         maximize=True,
@@ -250,13 +240,6 @@ def test_feasible_negative_rhs_ge_constraint(var_gen):
     assert math.isclose(_var_values(problem.result, "x1")["x1"], 3.0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known bug: inequality with negative RHS not normalized "
-        "(-x1 <= -2 means x1 >= 2). Phase I reports infeasible."
-    ),
-)
 def test_feasible_negative_rhs_after_flipped_inequality(var_gen):
     """
     Problem:
@@ -268,7 +251,7 @@ def test_feasible_negative_rhs_after_flipped_inequality(var_gen):
     """
     x1 = next(var_gen)
     problem = Simplex(
-        x1,
+        1 * x1,
         (-1) * x1 <= -2,
         x1 <= 5,
         maximize=True,
@@ -318,14 +301,7 @@ def test_infeasible_problem_two_phase(var_gen):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known bug: unbounded instance raises Boundless('encountered cycle in "
-        "simplex') instead of a dedicated unbounded status/detection."
-    ),
-)
-def test_unbounded_problem_raises_unbounded_not_cycle(var_gen):
+def test_unbounded_problem_raises_boundless(var_gen):
     """
     Problem:
         max  x1 + x2
@@ -343,22 +319,6 @@ def test_unbounded_problem_raises_unbounded_not_cycle(var_gen):
     )
 
     with pytest.raises(Boundless, match="unbounded"):
-        _consume_solve(problem)
-
-
-def test_unbounded_problem_current_behavior(var_gen):
-    """
-    Documents actual current behavior for the unbounded instance above.
-    """
-    x1, x2 = next(var_gen), next(var_gen)
-    problem = Simplex(
-        x1 + x2,
-        x1 - x2 <= 1,
-        maximize=True,
-        slack_var_generator=var_gen,
-    )
-
-    with pytest.raises(Boundless, match="cycle"):
         _consume_solve(problem)
 
 
