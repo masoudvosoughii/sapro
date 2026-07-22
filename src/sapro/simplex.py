@@ -154,7 +154,8 @@ class Simplex:
                  slack_var_generator: Iterator[Variable] | None = None,
                  slack_var_prefix: str = 's',
                  epsilon: float = DEFAULT_EPSILON,
-                 max_iterations: int = DEFAULT_MAX_ITERATIONS):
+                 max_iterations: int = DEFAULT_MAX_ITERATIONS,
+                 auto_two_phase: bool = True):
         '''
         Initializes Simplex Algorithm.
 
@@ -185,9 +186,13 @@ class Simplex:
         max_iterations:
             Maximum pivot operations allowed per ``two_phase`` (Phase I) or
             ``solve`` (Phase II primal plus dual repair) invocation.
+        auto_two_phase:
+            When ``True``, ``solve()`` automatically runs Phase I if the
+            canonical problem has no complete unit-slack (or surplus) basis.
         '''
         self.epsilon = self._validate_epsilon(epsilon)
         self.max_iterations = self._validate_max_iterations(max_iterations)
+        self.auto_two_phase = self._validate_auto_two_phase(auto_two_phase)
         self.target = target
         self.constraints = list(constraints)
         self.base_vars = None if bvs is None else list(bvs)
@@ -265,6 +270,31 @@ class Simplex:
         if max_iterations <= 0:
             raise ValueError('max_iterations must be a positive integer')
         return max_iterations
+    @staticmethod
+    def _validate_auto_two_phase(auto_two_phase: bool) -> bool:
+        if type(auto_two_phase) is not bool:
+            raise ValueError('auto_two_phase must be a boolean')
+        return auto_two_phase
+    def _requires_phase_one(self) -> bool:
+        '''
+        Return whether Phase I is needed before Phase II.
+
+        Phase I is required when no caller-provided basis exists and
+        canonicalization introduces fewer slack/surplus variables than
+        constraints (typically because of equality rows). All-``<=`` models
+        and other cases with one slack or surplus column per row already
+        have a square structural basis and skip Phase I.
+        '''
+        if self._phase_one_done:
+            return False
+        if self.base_vars is not None:
+            return False
+        self._ensure_normalized_rhs()
+        self.canonicalize()
+        M = len(self.constraints)
+        if M <= 0:
+            return False
+        return self._num_slack_vars != M
     def _check_pivot_limit(self, phase: str, completed_pivots: int) -> None:
         '''
         Raise ``IterationLimit`` before starting pivot ``completed_pivots + 1``.
@@ -788,7 +818,15 @@ class Simplex:
         -------
         tableau_gen:
             A generator, which yields at each algorithm step with the simplex table.
+            When ``auto_two_phase`` is enabled and Phase I is required, Phase I
+            steps are yielded first, followed by Phase II steps.
         '''
+        if self.auto_two_phase and self._requires_phase_one():
+            yield from self.two_phase(
+                yield_initial_tableau=yield_initial_tableau,
+                precision=precision,
+            )
+
         self._prepare(True) if not self._phase_one_done else self._prepare_phase_two()
 
         # check variables
