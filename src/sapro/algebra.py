@@ -2,7 +2,14 @@ from .error import InvalidSlack
 from numbers import Real
 from typing import Any, Generator, TypeVar, Literal, Mapping
 
-__all__ = ['Variable', 'VariablePool', 'Expression', 'Constraint', 'OperatorType']
+__all__ = [
+    'Variable',
+    'VariablePool',
+    'Expression',
+    'Constraint',
+    'OperatorType',
+    'normalize_constraint_rhs',
+]
 
 _T = TypeVar('_T')
 
@@ -281,6 +288,13 @@ class Expression:
 OperatorType = Literal['==', '<=', '>=']
 'Operator in constraint.'
 
+_FLIPPED_OPERATOR: dict[OperatorType, OperatorType] = {
+    '<=': '>=',
+    '>=': '<=',
+    '==': '==',
+}
+
+
 class Constraint:
     '''
     A equation / inequation as a constraint of the LP problem.
@@ -376,3 +390,19 @@ class Constraint:
         return 'Constraint({})'.format(self.display())
     def __str__(self):
         return self.display()
+
+
+def normalize_constraint_rhs(constraint: Constraint) -> Constraint:
+    '''
+    Return an equivalent constraint with a nonnegative right-hand side.
+
+    When ``b < 0`` in ``a^T x <= b``, both sides are multiplied by ``-1`` to
+    obtain ``(-a)^T x >= -b``. The same sign flip applies to ``>=``; equalities
+    keep ``==`` because both sides scale by ``-1``.
+
+    If the RHS is already nonnegative, the original object is returned unchanged.
+    '''
+    if constraint.rhs >= 0:
+        return constraint
+    coefs = {var: -coef for var, coef in constraint.coefficients.items()}
+    return Constraint(coefs, -constraint.rhs, _FLIPPED_OPERATOR[constraint.operator])

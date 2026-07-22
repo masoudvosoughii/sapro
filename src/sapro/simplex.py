@@ -180,6 +180,7 @@ class Simplex:
         self.slack_var_generator = slack_var_generator or Variable.sequence(slack_var_prefix)
         self.result = None
         self._num_slack_vars = 0
+        self._rhs_normalized = False
         if vs is None:
             variables = set()
             for c in constraints:
@@ -268,6 +269,77 @@ class Simplex:
         '''
         candidates = (rhs < 0).nonzero()[0]
         return candidates[0] if candidates.shape[0] > 0 else None
+    def _ensure_normalized_rhs(self):
+        '''
+        Normalize constraint RHS values to be nonnegative before introducing
+        slack, surplus, or artificial variables.
+        '''
+        if self._rhs_normalized:
+            return
+        self.constraints = [
+            normalize_constraint_rhs(c) for c in self.constraints
+        ]
+        self._rhs_normalized = True
+    def _primal_ratio_test(
+        self,
+        data: np.ndarray,
+        rhs: np.ndarray,
+        enter_index: int,
+    ) -> tuple[int | None, np.ndarray]:
+        '''
+        Minimum ratio test for a primal simplex pivot column.
+
+        Returns ``(leave_index, ratios)``. ``leave_index`` is ``None`` when the
+        problem is unbounded in the entering direction.
+        '''
+        pivot_col = data[:, enter_index]
+        with np.errstate(divide='ignore', invalid='ignore'):
+            ratios = np.where(
+                pivot_col > 0,
+                rhs / pivot_col,
+                np.inf,
+            )
+        if not np.any(np.isfinite(ratios)):
+            return None, ratios
+        leave_index = int(np.argmin(ratios))
+        pivot = data[leave_index, enter_index]
+        if not np.isfinite(pivot) or pivot <= 0:
+            return None, ratios
+        return leave_index, ratios
+    def _apply_pivot(
+        self,
+        data: np.ndarray,
+        sigma: np.ndarray,
+        rhs: np.ndarray,
+        enter_index: int,
+        leave_index: int,
+        M: int,
+    ) -> float:
+        '''
+        Apply a pivot on ``(leave_index, enter_index)`` and return the updated z.
+        Caller must update ``z`` separately using the returned row operations.
+        '''
+        pivot = data[leave_index, enter_index]
+        if not np.isfinite(pivot) or pivot <= 0:
+            raise Boundless('unbounded problem')
+        rhs[leave_index] /= pivot
+        data[leave_index] /= pivot
+        for i in range(M):
+            if i == leave_index:
+                continue
+            if data[i, enter_index] == 0:
+                continue
+            rhs[i] -= rhs[leave_index] * data[i, enter_index]
+            data[i] -= data[leave_index] * data[i][enter_index]
+        # Ratio uses the normalized pivot-row entry (always 1 after scaling).
+        ratio = sigma[enter_index] / data[leave_index, enter_index]
+        sigma -= data[leave_index] * ratio
+        return ratio
+    def _check_cycle(self, base_vars: list[Variable], base_var_memo: set[frozenset[Variable]]):
+        base_var_set = frozenset(base_vars)
+        if base_var_set in base_var_memo:
+            raise Cycle('encountered cycle in simplex')
+        base_var_memo.add(base_var_set)
     def canonicalize(self) -> int:
         '''
         Canonicalizes all constraints using slack variables from `self.slack_var_generator`.
@@ -277,6 +349,7 @@ class Simplex:
         num_slack_vars:
             Number of slack variables used.
         '''
+        self._ensure_normalized_rhs()
         for c in self.constraints:
             if not c.is_canonical:
                 self._num_slack_vars += 1
@@ -483,25 +556,11 @@ class Simplex:
             enter_index = self._select_entering_var(sigma[:-M], False)
             if enter_index is None:
                 break
-            with np.errstate(divide='ignore'):
-                ratios = np.where(
-                    data[:, enter_index] <= 0,
-                    np.inf,
-                    rhs / data[:, enter_index]
-                )
-            leave_index = np.argmin(ratios)
+            leave_index, _ratios = self._primal_ratio_test(data, rhs, enter_index)
+            if leave_index is None:
+                raise Boundless('unbounded problem')
             leave_var = base_vars[leave_index]
-            rhs[leave_index] /= data[leave_index][enter_index]
-            data[leave_index] /= data[leave_index][enter_index]
-            for i in range(M):
-                if i == leave_index:
-                    continue
-                if data[i][enter_index] == 0:
-                    continue
-                rhs[i] -= rhs[leave_index] * data[i][enter_index]
-                data[i] -= data[leave_index] * data[i][enter_index]
-            ratio = sigma[enter_index] / data[leave_index][enter_index]
-            sigma -= data[leave_index] * ratio
+            ratio = self._apply_pivot(data, sigma, rhs, enter_index, leave_index, M)
             z -= rhs[leave_index] * ratio
             base_vars[leave_index] = variables[enter_index]
 
@@ -519,10 +578,7 @@ class Simplex:
                 leave=leave_var
             )
 
-            base_var_set = frozenset(base_vars)
-            if base_var_set in base_var_memo:
-                raise Boundless("encountered cycle in simplex")
-            base_var_memo.add(base_var_set)
+            self._check_cycle(base_vars, base_var_memo)
         
         if not np.isclose(z, 0) or (rhs < 0).any():
             raise Unsolvable('cannot find feasible solution')
@@ -631,25 +687,11 @@ class Simplex:
             enter_index = self._select_entering_var(sigma, self.maximize)
             if enter_index is None:
                 break
-            with np.errstate(divide='ignore'):
-                ratios = np.where(
-                    data[:, enter_index] <= 0,
-                    np.inf,
-                    rhs / data[:, enter_index]
-                )
-            leave_index = np.argmin(ratios)
+            leave_index, _ratios = self._primal_ratio_test(data, rhs, enter_index)
+            if leave_index is None:
+                raise Boundless('unbounded problem')
             leave_var = self.base_vars[leave_index]
-            rhs[leave_index] /= data[leave_index][enter_index]
-            data[leave_index] /= data[leave_index][enter_index]
-            for i in range(M):
-                if i == leave_index:
-                    continue
-                if data[i][enter_index] == 0:
-                    continue
-                rhs[i] -= rhs[leave_index] * data[i][enter_index]
-                data[i] -= data[leave_index] * data[i][enter_index]
-            ratio = sigma[enter_index] / data[leave_index][enter_index]
-            sigma -= data[leave_index] * ratio
+            ratio = self._apply_pivot(data, sigma, rhs, enter_index, leave_index, M)
             z -= rhs[leave_index] * ratio
             self.base_vars[leave_index] = self.variables[enter_index]
             
@@ -667,10 +709,7 @@ class Simplex:
                 leave=leave_var
             )
 
-            base_var_set = frozenset(self.base_vars)
-            if base_var_set in base_var_memo:
-                raise Boundless("encountered cycle in simplex")
-            base_var_memo.add(base_var_set)
+            self._check_cycle(self.base_vars, base_var_memo)
 
         base_var_memo.clear()
         while True:
@@ -688,8 +727,11 @@ class Simplex:
                     np.inf,
                 )
             enter_index = np.argmin(np.abs(ratios))
-            rhs[leave_index] /= data[leave_index][enter_index]
-            data[leave_index] /= data[leave_index][enter_index]
+            pivot = data[leave_index, enter_index]
+            if not np.isfinite(pivot) or pivot == 0:
+                raise Unsolvable(f'cannot make "{leave_var}" leave base')
+            rhs[leave_index] /= pivot
+            data[leave_index] /= pivot
             for i in range(M):
                 if i == leave_index:
                     continue
@@ -697,7 +739,7 @@ class Simplex:
                     continue
                 rhs[i] -= rhs[leave_index] * data[i][enter_index]
                 data[i] -= data[leave_index] * data[i][enter_index]
-            ratio = sigma[enter_index] / data[leave_index][enter_index]
+            ratio = sigma[enter_index] / pivot
             sigma -= data[leave_index] * ratio
             z -= rhs[leave_index] * ratio
             self.base_vars[leave_index] = self.variables[enter_index]
@@ -716,10 +758,7 @@ class Simplex:
                 leave=leave_var
             )
 
-            base_var_set = frozenset(self.base_vars)
-            if base_var_set in base_var_memo:
-                raise Boundless("encountered cycle in simplex")
-            base_var_memo.add(base_var_set)
+            self._check_cycle(self.base_vars, base_var_memo)
         
         var_values = dict.fromkeys(self.variables, 0)
         var_values.update(zip(self.base_vars, rhs))
