@@ -50,7 +50,7 @@ def parse_expr_item(s: str, pool: VariablePool):
 
 def command_webui(parser):
     'Launches http server for Sapro.'
-    parser.add_argument('-H', '--host', default='0.0.0.0', help='Host to serve on.')
+    parser.add_argument('-H', '--host', default='127.0.0.1', help='Host to serve on.')
     parser.add_argument('-p', '--port', type=int, default=5678, help='Port to serve on.')
     parser.add_argument('--open', action='store_true', help='Open UI in browser.')
     args = yield
@@ -60,7 +60,7 @@ def command_webui(parser):
         t = Thread(target=run_app, args=(args.host, args.port), daemon=True)
         t.start()
         if args.open:
-            webbrowser.open(f'http://localhost:{args.port}', 2)
+            webbrowser.open(f'http://127.0.0.1:{args.port}', 2)
         while True:
             time.sleep(0xFF)
     except KeyboardInterrupt: pass
