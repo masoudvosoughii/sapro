@@ -18,3 +18,6 @@ class Boundless(LPError):
 
 class Cycle(LPError):
     'The simplex algorithm encountered a cycling basis.'
+
+class NumericalFailure(LPError):
+    'The simplex calculation became numerically unsafe.'

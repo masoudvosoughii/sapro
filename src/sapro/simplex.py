@@ -8,7 +8,9 @@ from io import StringIO
 from typing import Sequence, Iterator, Generator, TypedDict
 import numpy as np
 
-__all__ = ['LPStep', 'ExtraData', 'LPResult', 'FormattedConstraint', 'Simplex']
+__all__ = ['LPStep', 'ExtraData', 'LPResult', 'FormattedConstraint', 'Simplex', 'DEFAULT_EPSILON']
+
+DEFAULT_EPSILON = 1e-9
 
 class FormattedConstraint(TypedDict):
     '''
@@ -146,7 +148,8 @@ class Simplex:
                  bvs: Sequence[Variable] | None = None,
                  maximize: bool = False,
                  slack_var_generator: Iterator[Variable] | None = None,
-                 slack_var_prefix: str = 's'):
+                 slack_var_prefix: str = 's',
+                 epsilon: float = DEFAULT_EPSILON):
         '''
         Initializes Simplex Algorithm.
 
@@ -172,7 +175,10 @@ class Simplex:
         slack_var_prefix:
             Prefix when generating slack variables.
             Ignored if `slack_var_generator` is specified.
+        epsilon:
+            Numerical tolerance for pivot and optimality comparisons.
         '''
+        self.epsilon = self._validate_epsilon(epsilon)
         self.target = target
         self.constraints = list(constraints)
         self.base_vars = None if bvs is None else list(bvs)
@@ -233,6 +239,33 @@ class Simplex:
         return self.display()
     def __repr__(self):
         return 'Simplex({}, {})'.format(len(self.variables), len(self.constraints))
+    @staticmethod
+    def _validate_epsilon(epsilon: float) -> float:
+        epsilon = float(epsilon)
+        if not np.isfinite(epsilon):
+            raise ValueError('epsilon must be finite')
+        if epsilon <= 0:
+            raise ValueError('epsilon must be positive')
+        return epsilon
+    def _is_zero(self, value: Real) -> bool:
+        return abs(float(value)) <= self.epsilon
+    def _is_positive(self, value: Real) -> bool:
+        return float(value) > self.epsilon
+    def _is_negative(self, value: Real) -> bool:
+        return float(value) < -self.epsilon
+    def _clean_near_zero(self, array: np.ndarray) -> None:
+        array[np.abs(array) <= self.epsilon] = 0.0
+    def _ensure_finite(self, value: Real, message: str) -> float:
+        value = float(value)
+        if not np.isfinite(value):
+            raise NumericalFailure(message)
+        return value
+    def _ensure_finite_array(self, array: np.ndarray, message: str) -> None:
+        if not np.all(np.isfinite(array)):
+            raise NumericalFailure(message)
+    def _ensure_no_nan_array(self, array: np.ndarray, message: str) -> None:
+        if np.any(np.isnan(array)):
+            raise NumericalFailure(message)
     def _select_entering_var(self, sigma: np.ndarray, maximize: bool) -> int | None:
         '''
         Selects a variable to become base.
@@ -251,10 +284,14 @@ class Simplex:
             Index of the selected variable. `None` if none available.
         '''
         if maximize:
-            candidates = (sigma > 0).nonzero()[0]
+            candidates = np.array([
+                i for i, value in enumerate(sigma) if self._is_positive(value)
+            ], dtype=int)
         else:
-            candidates = (sigma < 0).nonzero()[0]
-        return candidates[0] if candidates.shape[0] > 0 else None
+            candidates = np.array([
+                i for i, value in enumerate(sigma) if self._is_negative(value)
+            ], dtype=int)
+        return int(candidates[0]) if candidates.shape[0] > 0 else None
     def _select_leaving_var(self, rhs: np.ndarray) -> int | None:
         '''
         Selects a variable to leave base.
@@ -269,8 +306,10 @@ class Simplex:
         index:
             Index of the selected variable. `None` if none available.
         '''
-        candidates = (rhs < 0).nonzero()[0]
-        return candidates[0] if candidates.shape[0] > 0 else None
+        candidates = np.array([
+            i for i, value in enumerate(rhs) if self._is_negative(value)
+        ], dtype=int)
+        return int(candidates[0]) if candidates.shape[0] > 0 else None
     def _ensure_normalized_rhs(self):
         '''
         Normalize constraint RHS values to be nonnegative before introducing
@@ -294,18 +333,27 @@ class Simplex:
         Returns ``(leave_index, ratios)``. ``leave_index`` is ``None`` when the
         problem is unbounded in the entering direction.
         '''
+        if enter_index < 0 or enter_index >= data.shape[1]:
+            raise NumericalFailure('entering column index out of bounds')
         pivot_col = data[:, enter_index]
+        positive_mask = np.array([self._is_positive(value) for value in pivot_col])
         with np.errstate(divide='ignore', invalid='ignore'):
             ratios = np.where(
-                pivot_col > 0,
+                positive_mask,
                 rhs / pivot_col,
                 np.inf,
             )
+        self._ensure_no_nan_array(ratios, 'ratio test produced non-finite values')
         if not np.any(np.isfinite(ratios)):
             return None, ratios
         leave_index = int(np.argmin(ratios))
-        pivot = data[leave_index, enter_index]
-        if not np.isfinite(pivot) or pivot <= 0:
+        pivot = self._ensure_finite(
+            data[leave_index, enter_index],
+            'pivot element is not finite',
+        )
+        if self._is_zero(pivot):
+            raise NumericalFailure('pivot element is too close to zero')
+        if not self._is_positive(pivot):
             return None, ratios
         return leave_index, ratios
     def _apply_pivot(
@@ -321,21 +369,40 @@ class Simplex:
         Apply a pivot on ``(leave_index, enter_index)`` and return the updated z.
         Caller must update ``z`` separately using the returned row operations.
         '''
-        pivot = data[leave_index, enter_index]
-        if not np.isfinite(pivot) or pivot <= 0:
-            raise Boundless('unbounded problem')
+        if not (0 <= leave_index < M and 0 <= enter_index < data.shape[1]):
+            raise NumericalFailure('pivot indices out of bounds')
+        pivot = self._ensure_finite(
+            data[leave_index, enter_index],
+            'pivot element is not finite',
+        )
+        if self._is_zero(pivot):
+            raise NumericalFailure('pivot element is too close to zero')
+        if not self._is_positive(pivot):
+            raise NumericalFailure('pivot element must be positive')
         rhs[leave_index] /= pivot
         data[leave_index] /= pivot
         for i in range(M):
             if i == leave_index:
                 continue
-            if data[i, enter_index] == 0:
+            if self._is_zero(data[i, enter_index]):
                 continue
             rhs[i] -= rhs[leave_index] * data[i, enter_index]
             data[i] -= data[leave_index] * data[i][enter_index]
-        # Ratio uses the normalized pivot-row entry (always 1 after scaling).
-        ratio = sigma[enter_index] / data[leave_index, enter_index]
+        pivot_entry = self._ensure_finite(
+            data[leave_index, enter_index],
+            'normalized pivot element is not finite',
+        )
+        ratio = self._ensure_finite(
+            sigma[enter_index] / pivot_entry,
+            'sigma update ratio is not finite',
+        )
         sigma -= data[leave_index] * ratio
+        self._clean_near_zero(data)
+        self._clean_near_zero(sigma)
+        self._clean_near_zero(rhs)
+        self._ensure_finite_array(data, 'tableau became non-finite after pivot')
+        self._ensure_finite_array(sigma, 'reduced costs became non-finite after pivot')
+        self._ensure_finite_array(rhs, 'rhs became non-finite after pivot')
         return ratio
     def _check_cycle(self, base_vars: list[Variable], base_var_memo: set[frozenset[Variable]]):
         base_var_set = frozenset(base_vars)
@@ -479,6 +546,8 @@ class Simplex:
 
         # initialize data, sigma, rhs and z
         ABinv = np.linalg.inv(AB)
+        if not np.all(np.isfinite(ABinv)):
+            raise NumericalFailure('basis matrix inversion produced non-finite values')
         ABinvAN = ABinv @ AN
         data = np.zeros((M, N))
         data[:, base_indices] = np.eye(M)
@@ -487,6 +556,13 @@ class Simplex:
         sigma[non_base_indices] = cTN - cTB @ ABinvAN
         rhs = ABinv @ b
         z = -cTB @ rhs
+        self._clean_near_zero(data)
+        self._clean_near_zero(sigma)
+        self._clean_near_zero(rhs)
+        z = self._ensure_finite(z, 'objective value is not finite after initialization')
+        self._ensure_finite_array(data, 'tableau is not finite after initialization')
+        self._ensure_finite_array(sigma, 'reduced costs are not finite after initialization')
+        self._ensure_finite_array(rhs, 'rhs is not finite after initialization')
 
         return data, sigma, rhs, z
     def set_base_vars(self, base_vars: Sequence[Variable] | None):
@@ -604,7 +680,7 @@ class Simplex:
 
             self._check_cycle(base_vars, base_var_memo)
         
-        if not np.isclose(z, 0) or (rhs < 0).any():
+        if not self._is_zero(z) or any(self._is_negative(value) for value in rhs):
             raise Unsolvable('cannot find feasible solution')
 
         removed_constraints = []
@@ -742,31 +818,53 @@ class Simplex:
             if leave_index is None:
                 break
             leave_var = self.base_vars[leave_index]
-            enterable = data[leave_index] < 0
+            enterable = np.array([
+                self._is_negative(value) for value in data[leave_index]
+            ])
             if not enterable.any():
                 raise Unsolvable(f'cannot make "{leave_var}" leave base')
-            with np.errstate(divide='ignore'):
+            with np.errstate(divide='ignore', invalid='ignore'):
                 ratios = np.where(
                     enterable,
                     sigma / data[leave_index],
                     np.inf,
                 )
-            enter_index = np.argmin(np.abs(ratios))
-            pivot = data[leave_index, enter_index]
-            if not np.isfinite(pivot) or pivot == 0:
-                raise Unsolvable(f'cannot make "{leave_var}" leave base')
+            self._ensure_no_nan_array(ratios, 'dual ratio test produced non-finite values')
+            enter_index = int(np.argmin(np.abs(ratios)))
+            pivot = self._ensure_finite(
+                data[leave_index, enter_index],
+                'dual pivot element is not finite',
+            )
+            if self._is_zero(pivot):
+                raise NumericalFailure('dual pivot element is too close to zero')
             rhs[leave_index] /= pivot
             data[leave_index] /= pivot
             for i in range(M):
                 if i == leave_index:
                     continue
-                if data[i][enter_index] == 0:
+                if self._is_zero(data[i, enter_index]):
                     continue
-                rhs[i] -= rhs[leave_index] * data[i][enter_index]
+                rhs[i] -= rhs[leave_index] * data[i, enter_index]
                 data[i] -= data[leave_index] * data[i][enter_index]
-            ratio = sigma[enter_index] / pivot
+            pivot_entry = self._ensure_finite(
+                data[leave_index, enter_index],
+                'normalized dual pivot element is not finite',
+            )
+            ratio = self._ensure_finite(
+                sigma[enter_index] / pivot_entry,
+                'dual sigma update ratio is not finite',
+            )
             sigma -= data[leave_index] * ratio
-            z -= rhs[leave_index] * ratio
+            z = self._ensure_finite(
+                z - rhs[leave_index] * ratio,
+                'objective value is not finite after dual pivot',
+            )
+            self._clean_near_zero(data)
+            self._clean_near_zero(sigma)
+            self._clean_near_zero(rhs)
+            self._ensure_finite_array(data, 'tableau became non-finite after dual pivot')
+            self._ensure_finite_array(sigma, 'reduced costs became non-finite after dual pivot')
+            self._ensure_finite_array(rhs, 'rhs became non-finite after dual pivot')
             self.base_vars[leave_index] = self.variables[enter_index]
             
             yield LPStep(
