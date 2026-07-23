@@ -35,18 +35,6 @@ header {
   margin-bottom: 24px;
 }
 
-.header-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.header-text {
-  flex: 1 1 280px;
-}
-
 h1 {
   margin: 0 0 6px;
   font-size: 2rem;
@@ -63,31 +51,6 @@ h1 {
   margin: 0;
   color: var(--muted);
   font-size: 12.5px;
-}
-
-.lang-switch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-}
-
-.lang-btn {
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text);
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.lang-btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-.lang-sep {
-  color: var(--muted);
 }
 
 .layout {
@@ -181,7 +144,7 @@ table.coeff-grid th {
 }
 
 table.coeff-grid td.row-label {
-  text-align: start;
+  text-align: left;
   font-weight: 600;
   background: #f8fafc;
 }
@@ -249,11 +212,6 @@ button.secondary:hover {
   background: #dbe3ef;
 }
 
-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 #status-box {
   min-height: 28px;
   margin-bottom: 12px;
@@ -286,6 +244,11 @@ button:disabled {
   margin: 4px 0;
 }
 
+.method-line {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .feasible-region {
   min-width: 0;
 }
@@ -310,13 +273,6 @@ button:disabled {
   margin: 6px 0 0;
 }
 
-.iteration-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
 details.step-panel {
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -329,29 +285,6 @@ details.step-panel summary {
   padding: 10px 12px;
   font-weight: 600;
   background: #f8fafc;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.phase-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.phase-badge.phase_one {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.phase-badge.phase_two {
-  background: #dbeafe;
-  color: #1e40af;
 }
 
 .step-body {

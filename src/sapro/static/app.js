@@ -5,171 +5,9 @@
   const MAX_DIM = 20;
   const EPS = 1e-9;
 
-  const I18N = {
-    en: {
-      pageTitle: "Simplex Method Solver",
-      pageSubtitle: "Advanced Optimization Course Project",
-      identityHtml:
-        "Developed by Masoud Vosoughi<br>" +
-        "Instructor: Mohsen Rostami Mal Khalife<br>" +
-        "Islamic Azad University, Science and Research Branch<br>" +
-        "Faculty of Converging Sciences and Technologies",
-      footer: "Simplex Method Solver — Advanced Optimization Course Project",
-      problemInput: "Problem Input",
-      results: "Results",
-      optimization: "Optimization:",
-      maximize: "Maximize",
-      minimize: "Minimize",
-      decisionVariables: "Decision variables",
-      constraints: "Constraints",
-      objective: "Objective",
-      operator: "Operator",
-      rhs: "RHS",
-      solve: "Solve",
-      newProblem: "New Problem",
-      loadExample: "Load example",
-      loadExampleBtn: "Load Example",
-      problemPreview: "Problem Preview",
-      expandAll: "Expand All",
-      collapseAll: "Collapse All",
-      noResults: "No results yet.",
-      status: "Status",
-      objectiveValue: "Objective (Z)",
-      decisionVariablesResult: "Decision variables",
-      phaseOneIterations: "Phase I iterations",
-      phaseTwoIterations: "Phase II iterations",
-      totalIterations: "Total iterations",
-      feasibleRegion: "Feasible Region",
-      vizUnavailable:
-        "Two-dimensional visualization is available only for problems with exactly two decision variables.",
-      noFeasibleRegion: "No feasible region exists.",
-      unboundedNotice: "The feasible region continues beyond the displayed chart.",
-      equalityNote:
-        "Equality constraints are shown as lines; lower-dimensional feasible sets may not be shaded.",
-      solving: "Solving...",
-      formReset: "Form reset.",
-      networkError: "Could not reach the local solver.",
-      subjectTo: "Subject to:",
-      constraintsLabel: "Subject to:",
-      nonNegativity: "non-negativity",
-      maxVerb: "Max",
-      minVerb: "Min",
-      phaseOne: "Phase I",
-      phaseTwo: "Phase II",
-      stepEnterLeave: "Step {index} ({phase}, #{phaseIter}): {enter} enters, {leave} leaves",
-      optimal: "Optimal solution found.",
-      infeasible: "The problem has no feasible solution.",
-      unbounded: "The problem is unbounded.",
-      cycle: "The simplex algorithm encountered a cycling basis.",
-      numericalFailure: "The solver encountered a numerical failure.",
-      iterationLimit: "Iteration limit reached.",
-      internalError: "An unexpected internal error occurred while solving the problem.",
-      invalidInput: "Invalid input.",
-      requestFailed: "Request failed.",
-      unknownError: "Unknown error.",
-      exampleReadme: "Basic bounded maximization",
-      exampleMinimization: "Minimization",
-      exampleGe: "Greater-than-or-equal constraint",
-      exampleEquality: "Equality constraint",
-      exampleMixed: "Mixed operators",
-      exampleNegativeRhs: "Negative RHS",
-      exampleInfeasible: "Infeasible problem",
-      exampleUnbounded: "Unbounded problem",
-      exampleDecimal: "Decimal coefficients",
-      optimalPoint: "Optimal point",
-      legendConstraints: "Constraints",
-      chartAriaLabel: "Feasible region chart for two decision variables",
-    },
-    fa: {
-      pageTitle: "حل‌گر روش سیمپلکس",
-      pageSubtitle: "پروژه درس بهینه‌سازی پیشرفته",
-      identityHtml:
-        "توسعه‌دهنده: Masoud Vosoughi<br>" +
-        "استاد: Mohsen Rostami Mal Khalife<br>" +
-        "دانشگاه آزاد اسلامی، واحد علوم و تحقیقات<br>" +
-        "دانشکده علوم و فناوری‌های همگرا",
-      footer: "حل‌گر روش سیمپلکس — پروژه درس بهینه‌سازی پیشرفته",
-      problemInput: "ورود مسئله",
-      results: "نتایج",
-      optimization: "بهینه‌سازی:",
-      maximize: "بیشینه‌سازی",
-      minimize: "کمینه‌سازی",
-      decisionVariables: "متغیرهای تصمیم",
-      constraints: "محدودیت‌ها",
-      objective: "تابع هدف",
-      operator: "عملگر",
-      rhs: "مقدار ثابت",
-      solve: "حل",
-      newProblem: "مسئله جدید",
-      loadExample: "بارگذاری مثال",
-      loadExampleBtn: "بارگذاری مثال",
-      problemPreview: "پیش‌نمایش مسئله",
-      expandAll: "باز کردن همه مراحل",
-      collapseAll: "بستن همه مراحل",
-      noResults: "هنوز نتیجه‌ای وجود ندارد.",
-      status: "وضعیت",
-      objectiveValue: "مقدار تابع هدف (Z)",
-      decisionVariablesResult: "متغیرهای تصمیم",
-      phaseOneIterations: "تعداد تکرارهای فاز اول",
-      phaseTwoIterations: "تعداد تکرارهای فاز دوم",
-      totalIterations: "مجموع تکرارها",
-      feasibleRegion: "ناحیه شدنی",
-      vizUnavailable:
-        "بصری‌سازی دوبعدی فقط برای مسائل دارای دقیقاً دو متغیر تصمیم در دسترس است.",
-      noFeasibleRegion: "ناحیه شدنی وجود ندارد.",
-      unboundedNotice: "ناحیه شدنی فراتر از محدوده نمایش‌داده‌شده ادامه دارد.",
-      equalityNote:
-        "محدودیت‌های برابری به‌صورت خط نمایش داده می‌شوند؛ مجموعه‌های شدنی با بعد پایین‌تر ممکن است سایه‌زده نشوند.",
-      solving: "در حال حل...",
-      formReset: "فرم بازنشانی شد.",
-      networkError: "ارتباط با حل‌گر محلی برقرار نشد.",
-      subjectTo: "با محدودیت‌های:",
-      constraintsLabel: "با محدودیت‌های:",
-      nonNegativity: "نامنفی بودن",
-      maxVerb: "بیشینه‌سازی",
-      minVerb: "کمینه‌سازی",
-      phaseOne: "فاز اول",
-      phaseTwo: "فاز دوم",
-      stepEnterLeave: "مرحله {index} ({phase}، #{phaseIter}): {enter} وارد، {leave} خارج",
-      optimal: "جواب بهینه یافت شد.",
-      infeasible: "مسئله جواب شدنی ندارد.",
-      unbounded: "مسئله نامحدود است.",
-      cycle: "الگوریتم سیمپلکس با چرخه در پایه مواجه شد.",
-      numericalFailure: "حل‌گر با خطای عددی مواجه شد.",
-      iterationLimit: "حد تکرار رسیده است.",
-      internalError: "خطای داخلی غیرمنتظره هنگام حل مسئله رخ داد.",
-      invalidInput: "ورودی نامعتبر.",
-      requestFailed: "درخواست ناموفق بود.",
-      unknownError: "خطای ناشناخته.",
-      exampleReadme: "بیشینه‌سازی کران‌دار پایه",
-      exampleMinimization: "کمینه‌سازی",
-      exampleGe: "محدودیت بزرگ‌تر یا مساوی",
-      exampleEquality: "محدودیت برابری",
-      exampleMixed: "عملگرهای مختلط",
-      exampleNegativeRhs: "مقدار ثابت منفی",
-      exampleInfeasible: "مسئله ناممکن",
-      exampleUnbounded: "مسئله نامحدود",
-      exampleDecimal: "ضرایب اعشاری",
-      optimalPoint: "نقطه بهینه",
-      legendConstraints: "محدودیت‌ها",
-      chartAriaLabel: "نمودار ناحیه شدنی برای دو متغیر تصمیم",
-    },
-  };
-
-  const ERROR_STATUS_KEYS = {
-    optimal: "optimal",
-    infeasible: "infeasible",
-    unbounded: "unbounded",
-    cycle: "cycle",
-    numerical_failure: "numericalFailure",
-    iteration_limit: "iterationLimit",
-    internal_error: "internalError",
-    invalid_input: "invalidInput",
-  };
-
   const EXAMPLES = {
     readme: {
-      labelKey: "exampleReadme",
+      label: "Basic bounded maximization",
       optimization: "max",
       numVars: 2,
       numConstraints: 3,
@@ -181,7 +19,7 @@
       ],
     },
     minimization: {
-      labelKey: "exampleMinimization",
+      label: "Minimization",
       optimization: "min",
       numVars: 2,
       numConstraints: 1,
@@ -189,7 +27,7 @@
       constraints: [{ coefficients: [1, 1], operator: ">=", rhs: 4 }],
     },
     ge: {
-      labelKey: "exampleGe",
+      label: "Greater-than-or-equal constraint",
       optimization: "max",
       numVars: 1,
       numConstraints: 2,
@@ -200,7 +38,7 @@
       ],
     },
     equality: {
-      labelKey: "exampleEquality",
+      label: "Equality constraint",
       optimization: "max",
       numVars: 2,
       numConstraints: 1,
@@ -208,7 +46,7 @@
       constraints: [{ coefficients: [1, 1], operator: "==", rhs: 4 }],
     },
     mixed: {
-      labelKey: "exampleMixed",
+      label: "Mixed operators",
       optimization: "max",
       numVars: 2,
       numConstraints: 3,
@@ -220,7 +58,7 @@
       ],
     },
     negative_rhs: {
-      labelKey: "exampleNegativeRhs",
+      label: "Negative RHS",
       optimization: "max",
       numVars: 1,
       numConstraints: 2,
@@ -231,7 +69,7 @@
       ],
     },
     infeasible: {
-      labelKey: "exampleInfeasible",
+      label: "Infeasible problem",
       optimization: "max",
       numVars: 2,
       numConstraints: 3,
@@ -243,7 +81,7 @@
       ],
     },
     unbounded: {
-      labelKey: "exampleUnbounded",
+      label: "Unbounded problem",
       optimization: "max",
       numVars: 2,
       numConstraints: 2,
@@ -254,7 +92,7 @@
       ],
     },
     decimal: {
-      labelKey: "exampleDecimal",
+      label: "Decimal coefficients",
       optimization: "max",
       numVars: 2,
       numConstraints: 2,
@@ -268,17 +106,9 @@
 
   const CONSTRAINT_COLORS = ["#245bdb", "#1f7a4d", "#b45309", "#7c3aed", "#be123c"];
 
-  let lang = "en";
   let lastSolvePayload = null;
-  let lastSolveResult = null;
 
   const els = {
-    pageTitle: document.getElementById("page-title"),
-    pageSubtitle: document.getElementById("page-subtitle"),
-    pageIdentity: document.getElementById("page-identity"),
-    pageFooter: document.getElementById("page-footer"),
-    langEn: document.getElementById("lang-en"),
-    langFa: document.getElementById("lang-fa"),
     numVars: document.getElementById("num-vars"),
     numConstraints: document.getElementById("num-constraints"),
     objectiveGrid: document.getElementById("objective-grid"),
@@ -288,56 +118,12 @@
     resultSummary: document.getElementById("result-summary"),
     feasibleViz: document.getElementById("feasible-region-viz"),
     feasibleNote: document.getElementById("feasible-region-note"),
-    iterationControls: document.getElementById("iteration-controls"),
-    expandAllBtn: document.getElementById("expand-all-btn"),
-    collapseAllBtn: document.getElementById("collapse-all-btn"),
     stepsContainer: document.getElementById("steps-container"),
     exampleSelect: document.getElementById("example-select"),
     solveBtn: document.getElementById("solve-btn"),
     newProblemBtn: document.getElementById("new-problem-btn"),
     loadExampleBtn: document.getElementById("load-example-btn"),
   };
-
-  function t(key) {
-    return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
-  }
-
-  function translateErrorMessage(data) {
-    if (!data) {
-      return t("unknownError");
-    }
-    const key = ERROR_STATUS_KEYS[data.status];
-    if (key && I18N[lang][key]) {
-      return t(key);
-    }
-    return data.message || t("unknownError");
-  }
-
-  function setLanguage(nextLang) {
-    lang = nextLang === "fa" ? "fa" : "en";
-    document.documentElement.lang = lang === "fa" ? "fa" : "en";
-    document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
-    els.langEn.classList.toggle("active", lang === "en");
-    els.langFa.classList.toggle("active", lang === "fa");
-    els.langEn.setAttribute("aria-pressed", lang === "en" ? "true" : "false");
-    els.langFa.setAttribute("aria-pressed", lang === "fa" ? "true" : "false");
-    document.title = t("pageTitle");
-    els.pageTitle.textContent = t("pageTitle");
-    els.pageSubtitle.textContent = t("pageSubtitle");
-    els.pageIdentity.innerHTML = t("identityHtml");
-    els.pageFooter.textContent = t("footer");
-    document.querySelectorAll("[data-i18n]").forEach((node) => {
-      node.textContent = t(node.dataset.i18n);
-    });
-    populateExampleSelect();
-    renderGridsLabels();
-    updateProblemPreview();
-    if (lastSolveResult) {
-      renderResult(lastSolveResult, lastSolvePayload);
-    } else {
-      renderFeasibleRegion(null, collectPayload());
-    }
-  }
 
   function clampDimension(value) {
     const parsed = Number.parseInt(String(value), 10);
@@ -368,21 +154,6 @@
     return input;
   }
 
-  function renderGridsLabels() {
-    const objectiveLabel = els.objectiveGrid.querySelector(".row-label");
-    if (objectiveLabel) {
-      objectiveLabel.textContent = t("objective");
-    }
-    const opHeader = els.constraintGrid.querySelector("thead th:nth-last-child(2)");
-    const rhsHeader = els.constraintGrid.querySelector("thead th:last-child");
-    if (opHeader) {
-      opHeader.textContent = t("operator");
-    }
-    if (rhsHeader) {
-      rhsHeader.textContent = t("rhs");
-    }
-  }
-
   function renderObjectiveGrid(numVars, values) {
     els.objectiveGrid.innerHTML = "";
     const table = document.createElement("table");
@@ -402,7 +173,7 @@
     const row = document.createElement("tr");
     const label = document.createElement("td");
     label.className = "row-label";
-    label.textContent = t("objective");
+    label.textContent = "Objective";
     row.appendChild(label);
     for (let j = 0; j < numVars; j += 1) {
       const cell = document.createElement("td");
@@ -427,9 +198,9 @@
       th.textContent = `x${j + 1}`;
       headRow.appendChild(th);
     }
-    ["operator", "rhs"].forEach((labelKey) => {
+    ["Operator", "RHS"].forEach((headerLabel) => {
       const th = document.createElement("th");
-      th.textContent = t(labelKey);
+      th.textContent = headerLabel;
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
@@ -572,8 +343,8 @@
   }
 
   function buildProblemPreviewText(payload) {
-    const dir = payload.optimization === "max" ? t("maxVerb") : t("minVerb");
-    const lines = [`${dir} Z = ${formatObjectiveExpression(payload.objective)}`, "", t("constraintsLabel")];
+    const dir = payload.optimization === "max" ? "Max" : "Min";
+    const lines = [`${dir} Z = ${formatObjectiveExpression(payload.objective)}`, "", "Subject to:"];
     payload.constraints.forEach((row) => {
       lines.push(formatConstraintLine(row));
     });
@@ -584,6 +355,26 @@
 
   function updateProblemPreview() {
     els.problemPreview.textContent = buildProblemPreviewText(collectPayload());
+  }
+
+  function buildMethodLine(phaseCounts) {
+    if (!phaseCounts || phaseCounts.phase_one === 0) {
+      return "Method: Simplex";
+    }
+    return `Method: Two-Phase Simplex · Phase I: ${phaseCounts.phase_one} · Phase II: ${phaseCounts.phase_two}`;
+  }
+
+  function formatStepHeading(step) {
+    if (step.enter && step.leave) {
+      return `Step ${step.index}: ${step.enter} enters, ${step.leave} leaves`;
+    }
+    if (step.enter) {
+      return `Step ${step.index}: ${step.enter} enters`;
+    }
+    if (step.leave) {
+      return `Step ${step.index}: ${step.leave} leaves`;
+    }
+    return `Step ${step.index}`;
   }
 
   function loadExample(key) {
@@ -609,23 +400,21 @@
       { coefficients: [0, 0], operator: "<=", rhs: 0 },
     ]);
     lastSolvePayload = null;
-    lastSolveResult = null;
-    clearResults(t("formReset"));
+    clearResults("Form reset.");
     updateProblemPreview();
   }
 
   function clearResults(message) {
     els.statusBox.textContent = message || "";
     els.statusBox.className = "";
-    els.resultSummary.innerHTML = `<p class="empty-state">${t("noResults")}</p>`;
+    els.resultSummary.innerHTML = '<p class="empty-state">No results yet.</p>';
     els.stepsContainer.innerHTML = "";
-    els.iterationControls.hidden = true;
     renderFeasibleRegion(null, collectPayload());
   }
 
   function renderTableau(tableau) {
     if (!tableau || !tableau.length) {
-      return `<p class="empty-state">${t("unknownError")}</p>`;
+      return '<p class="empty-state">No tableau data.</p>';
     }
     const headers = tableau[0];
     const bodyRows = tableau.slice(1, -1);
@@ -650,41 +439,16 @@
     return html;
   }
 
-  function phaseLabel(phase) {
-    return phase === "phase_one" ? t("phaseOne") : t("phaseTwo");
-  }
-
-  function setIterationControlsVisible(visible) {
-    els.iterationControls.hidden = !visible;
-    els.expandAllBtn.disabled = !visible;
-    els.collapseAllBtn.disabled = !visible;
-  }
-
   function renderSteps(steps) {
     els.stepsContainer.innerHTML = "";
     if (!steps || !steps.length) {
-      setIterationControlsVisible(false);
       return;
     }
-    setIterationControlsVisible(true);
     steps.forEach((step) => {
       const details = document.createElement("details");
       details.className = "step-panel";
-      const phase = step.phase || "phase_two";
-      const phaseIter = step.phase_iteration || step.index;
       const summary = document.createElement("summary");
-      const badge = document.createElement("span");
-      badge.className = `phase-badge ${phase}`;
-      badge.textContent = phase === "phase_one" ? t("phaseOne") : t("phaseTwo");
-      summary.appendChild(badge);
-      const text = document.createElement("span");
-      text.textContent = t("stepEnterLeave")
-        .replace("{index}", String(step.index))
-        .replace("{phase}", phaseLabel(phase))
-        .replace("{phaseIter}", String(phaseIter))
-        .replace("{enter}", step.enter || "—")
-        .replace("{leave}", step.leave || "—");
-      summary.appendChild(text);
+      summary.textContent = formatStepHeading(step);
       details.appendChild(summary);
       const body = document.createElement("div");
       body.className = "step-body math-ltr";
@@ -699,24 +463,21 @@
   }
 
   function renderResult(data, payload) {
-    lastSolveResult = data;
     lastSolvePayload = payload || collectPayload();
 
     if (!data.ok) {
-      const message = translateErrorMessage(data);
-      els.statusBox.textContent = message;
+      els.statusBox.textContent = data.message || "Request failed.";
       els.statusBox.className = "error";
       els.resultSummary.innerHTML = `
-        <p><strong>${t("status")}:</strong> ${data.status || "error"}</p>
-        <p>${message}</p>
+        <p><strong>Status:</strong> ${data.status || "error"}</p>
+        <p>${data.message || "Unknown error."}</p>
       `;
       els.stepsContainer.innerHTML = "";
-      setIterationControlsVisible(false);
       renderFeasibleRegion(data, lastSolvePayload);
       return;
     }
 
-    els.statusBox.textContent = t("optimal");
+    els.statusBox.textContent = data.status_label || "Optimal solution found.";
     els.statusBox.className = "ok";
 
     const vars = Object.entries(data.variable_values || {})
@@ -728,14 +489,14 @@
       phase_two: data.step_count || 0,
       total: data.step_count || 0,
     };
+    const totalIterations = phaseCounts.total ?? data.step_count ?? 0;
 
     els.resultSummary.innerHTML = `
-      <p><strong>${t("status")}:</strong> ${t("optimal")}</p>
-      <p><strong>${t("objectiveValue")}:</strong> ${formatNumber(data.objective_value)}</p>
-      <p><strong>${t("decisionVariablesResult")}:</strong> ${vars || "—"}</p>
-      <p><strong>${t("phaseOneIterations")}:</strong> ${phaseCounts.phase_one}</p>
-      <p><strong>${t("phaseTwoIterations")}:</strong> ${phaseCounts.phase_two}</p>
-      <p><strong>${t("totalIterations")}:</strong> ${phaseCounts.total}</p>
+      <p><strong>Status:</strong> ${data.status_label || "Optimal solution found."}</p>
+      <p><strong>Objective (Z):</strong> ${formatNumber(data.objective_value)}</p>
+      <p><strong>Decision variables:</strong> ${vars || "None"}</p>
+      <p><strong>Iterations:</strong> ${totalIterations}</p>
+      <p class="method-line">${buildMethodLine(phaseCounts)}</p>
     `;
 
     renderSteps(data.steps || []);
@@ -834,7 +595,7 @@
     polygon = clipPolygon(polygon, 1, 0, 0, ">=");
     polygon = clipPolygon(polygon, 0, 1, 0, ">=");
     payload.constraints.forEach((row) => {
-      if (row.operator === "==" ) {
+      if (row.operator === "==") {
         return;
       }
       const [a, b] = row.coefficients;
@@ -879,10 +640,11 @@
   function renderFeasibleRegion(result, payload) {
     els.feasibleNote.hidden = true;
     els.feasibleNote.textContent = "";
-    els.feasibleViz.setAttribute("aria-label", t("chartAriaLabel"));
+    els.feasibleViz.setAttribute("aria-label", "Feasible region chart for two decision variables");
 
     if (payload.objective.length !== 2) {
-      els.feasibleViz.innerHTML = `<p class="viz-message">${t("vizUnavailable")}</p>`;
+      els.feasibleViz.innerHTML =
+        '<p class="viz-message">Two-dimensional visualization is available only for problems with exactly two decision variables.</p>';
       return;
     }
 
@@ -908,9 +670,9 @@
 
     let note = "";
     if (result && !result.ok && result.status === "infeasible") {
-      note = t("noFeasibleRegion");
+      note = "No feasible region exists.";
     } else if (result && !result.ok && result.status === "unbounded") {
-      note = t("unboundedNotice");
+      note = "The feasible region continues beyond the displayed chart.";
     }
 
     const hasEquality = payload.constraints.some((row) => row.operator === "==");
@@ -918,7 +680,7 @@
     const area = polygonArea(polygon);
     const showFill = area > EPS && !(result && !result.ok && result.status === "infeasible");
 
-    let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${t("chartAriaLabel")}" xmlns="http://www.w3.org/2000/svg">`;
+    let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Feasible region chart for two decision variables" xmlns="http://www.w3.org/2000/svg">`;
     svg += `<rect x="0" y="0" width="${width}" height="${height}" fill="#fafbfd"/>`;
 
     svg += `<line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#64748b" stroke-width="1"/>`;
@@ -947,10 +709,10 @@
 
     if (optimalPoint && Number.isFinite(optimalPoint.x) && Number.isFinite(optimalPoint.y)) {
       svg += `<circle cx="${toSvgX(optimalPoint.x)}" cy="${toSvgY(optimalPoint.y)}" r="5" fill="#1f7a4d" stroke="#fff" stroke-width="1.5"/>`;
-      svg += `<text x="${toSvgX(optimalPoint.x) + 8}" y="${toSvgY(optimalPoint.y) - 8}" font-size="11" fill="#1f7a4d">${t("optimalPoint")} (${formatNumber(optimalPoint.x)}, ${formatNumber(optimalPoint.y)})</text>`;
+      svg += `<text x="${toSvgX(optimalPoint.x) + 8}" y="${toSvgY(optimalPoint.y) - 8}" font-size="11" fill="#1f7a4d">Optimal point (${formatNumber(optimalPoint.x)}, ${formatNumber(optimalPoint.y)})</text>`;
     }
 
-    svg += `<text x="${pad}" y="18" font-size="11" fill="#475569">${t("legendConstraints")}</text>`;
+    svg += '<text x="' + pad + '" y="18" font-size="11" fill="#475569">Constraints</text>';
     svg += "</svg>";
 
     els.feasibleViz.innerHTML = svg;
@@ -960,15 +722,16 @@
       els.feasibleNote.textContent = note;
     } else if (hasEquality && area <= EPS) {
       els.feasibleNote.hidden = false;
-      els.feasibleNote.textContent = t("equalityNote");
+      els.feasibleNote.textContent =
+        "Equality constraints are shown as lines; lower-dimensional feasible sets may not be shaded.";
     } else if (result && !result.ok && result.status === "unbounded") {
       els.feasibleNote.hidden = false;
-      els.feasibleNote.textContent = t("unboundedNotice");
+      els.feasibleNote.textContent = "The feasible region continues beyond the displayed chart.";
     }
   }
 
   async function solve() {
-    clearResults(t("solving"));
+    clearResults("Solving...");
     const payload = collectPayload();
     try {
       const response = await fetch("/api/solve", {
@@ -979,8 +742,7 @@
       const data = await response.json();
       renderResult(data, payload);
     } catch (error) {
-      lastSolveResult = null;
-      els.statusBox.textContent = t("networkError");
+      els.statusBox.textContent = "Could not reach the local solver.";
       els.statusBox.className = "error";
       els.resultSummary.innerHTML = `<p>${error.message}</p>`;
       renderFeasibleRegion(null, payload);
@@ -988,34 +750,12 @@
   }
 
   function populateExampleSelect() {
-    const current = els.exampleSelect.value || "readme";
     els.exampleSelect.innerHTML = "";
     Object.entries(EXAMPLES).forEach(([key, example]) => {
       const option = document.createElement("option");
       option.value = key;
-      option.textContent = t(example.labelKey);
+      option.textContent = example.label;
       els.exampleSelect.appendChild(option);
-    });
-    els.exampleSelect.value = current;
-  }
-
-  function expandAllSteps() {
-    els.stepsContainer.querySelectorAll("details.step-panel").forEach((panel) => {
-      panel.open = true;
-      const summary = panel.querySelector("summary");
-      if (summary) {
-        summary.setAttribute("aria-expanded", "true");
-      }
-    });
-  }
-
-  function collapseAllSteps() {
-    els.stepsContainer.querySelectorAll("details.step-panel").forEach((panel) => {
-      panel.open = false;
-      const summary = panel.querySelector("summary");
-      if (summary) {
-        summary.setAttribute("aria-expanded", "false");
-      }
     });
   }
 
@@ -1026,32 +766,25 @@
   els.loadExampleBtn.addEventListener("click", () => {
     loadExample(els.exampleSelect.value);
   });
-  els.langEn.addEventListener("click", () => setLanguage("en"));
-  els.langFa.addEventListener("click", () => setLanguage("fa"));
-  els.expandAllBtn.addEventListener("click", expandAllSteps);
-  els.collapseAllBtn.addEventListener("click", collapseAllSteps);
   document.querySelectorAll('input[name="optimization"]').forEach((input) => {
     input.addEventListener("change", updateProblemPreview);
   });
 
   populateExampleSelect();
   loadExample("readme");
-  setLanguage("en");
 
   window.__saproUi = {
     buildProblemPreviewText,
     formatObjectiveExpression,
     formatTerm,
+    buildMethodLine,
+    formatStepHeading,
     buildFeasiblePolygon,
     polygonArea,
     computeViewport,
     EXAMPLES,
-    I18N,
-    setLanguage,
     collectPayload,
     resetNewProblem,
-    expandAllSteps,
-    collapseAllSteps,
     renderFeasibleRegion,
   };
 })();
