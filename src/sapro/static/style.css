@@ -35,6 +35,18 @@ header {
   margin-bottom: 24px;
 }
 
+.header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-text {
+  flex: 1 1 280px;
+}
+
 h1 {
   margin: 0 0 6px;
   font-size: 2rem;
@@ -51,6 +63,31 @@ h1 {
   margin: 0;
   color: var(--muted);
   font-size: 12.5px;
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.lang-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.lang-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.lang-sep {
+  color: var(--muted);
 }
 
 .layout {
@@ -70,6 +107,11 @@ h1 {
 .panel h2 {
   margin: 0 0 14px;
   font-size: 1.15rem;
+}
+
+.panel h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
 }
 
 .form-row {
@@ -100,6 +142,7 @@ select {
 
 .radio-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   align-items: center;
   margin-bottom: 14px;
@@ -138,7 +181,7 @@ table.coeff-grid th {
 }
 
 table.coeff-grid td.row-label {
-  text-align: left;
+  text-align: start;
   font-weight: 600;
   background: #f8fafc;
 }
@@ -150,6 +193,27 @@ table.coeff-grid input {
   border-radius: 4px;
   text-align: center;
   font: inherit;
+}
+
+.math-ltr {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+.problem-preview {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.problem-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
 }
 
 .actions {
@@ -185,6 +249,11 @@ button.secondary:hover {
   background: #dbe3ef;
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 #status-box {
   min-height: 28px;
   margin-bottom: 12px;
@@ -199,16 +268,53 @@ button.secondary:hover {
   color: var(--error);
 }
 
+.results-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
 .result-summary {
   background: #f8fafc;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px;
-  margin-bottom: 16px;
 }
 
 .result-summary p {
   margin: 4px 0;
+}
+
+.feasible-region {
+  min-width: 0;
+}
+
+.feasible-viz {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.feasible-viz svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+.viz-message,
+.viz-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 6px 0 0;
+}
+
+.iteration-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 details.step-panel {
@@ -223,6 +329,29 @@ details.step-panel summary {
   padding: 10px 12px;
   font-weight: 600;
   background: #f8fafc;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.phase-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.phase-badge.phase_one {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.phase-badge.phase_two {
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .step-body {
@@ -262,7 +391,18 @@ footer {
 }
 
 @media (max-width: 900px) {
-  .layout {
+  .layout,
+  .results-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  table.coeff-grid {
+    min-width: 360px;
   }
 }

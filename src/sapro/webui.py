@@ -206,22 +206,74 @@ def map_lp_error(error: LPError) -> tuple[str, str, str]:
     return 'error', type(error).__name__, str(error)
 
 
-def encode_step(index: int, step: LPStep) -> dict:
-    return {
+def _is_pivot_step(step: LPStep) -> bool:
+    return step.enter is not None
+
+
+def collect_tagged_steps(problem: Simplex) -> tuple[list[tuple[LPStep, str, int]], dict[str, int]]:
+    '''
+    Run the solver and tag each yielded pivot step with its phase.
+
+    Phase boundaries follow the same orchestration as ``Simplex.solve()`` with
+    ``auto_two_phase`` enabled, without inferring phase from variable names.
+    '''
+    tagged: list[tuple[LPStep, str, int]] = []
+    phase_one_count = 0
+    phase_two_count = 0
+
+    def append_step(step: LPStep, phase: str) -> None:
+        nonlocal phase_one_count, phase_two_count
+        if phase == 'phase_one':
+            if _is_pivot_step(step):
+                phase_one_count += 1
+                phase_iteration = phase_one_count
+            else:
+                phase_iteration = 0
+        elif _is_pivot_step(step):
+            phase_two_count += 1
+            phase_iteration = phase_two_count
+        else:
+            phase_iteration = 0
+        tagged.append((step, phase, phase_iteration))
+
+    if problem.auto_two_phase and problem._requires_phase_one():
+        for step in problem.two_phase():
+            append_step(step, 'phase_one')
+        for step in problem.solve():
+            append_step(step, 'phase_two')
+    else:
+        for step in problem.solve():
+            append_step(step, 'phase_two')
+
+    total = phase_one_count + phase_two_count
+    phase_counts = {
+        'phase_one': phase_one_count,
+        'phase_two': phase_two_count,
+        'total': total,
+    }
+    return tagged, phase_counts
+
+
+def encode_step(index: int, step: LPStep, phase: str, phase_iteration: int) -> dict:
+    payload = {
         'index': index,
         'enter': None if step.enter is None else step.enter.name,
         'leave': None if step.leave is None else step.leave.name,
         'tableau': step.tableau.to_frame(),
+        'phase': phase,
     }
+    if phase_iteration > 0:
+        payload['phase_iteration'] = phase_iteration
+    return payload
 
 
 def solve_coefficient_request(request: dict) -> dict:
     try:
         problem = build_simplex_problem(request)
-        steps: list[LPStep] = []
+        tagged_steps: list[tuple[LPStep, str, int]] = []
+        phase_counts = {'phase_one': 0, 'phase_two': 0, 'total': 0}
         try:
-            for step in problem.solve():
-                steps.append(step)
+            tagged_steps, phase_counts = collect_tagged_steps(problem)
         except LPError as error:
             status, error_type, message = map_lp_error(error)
             return {
@@ -252,10 +304,11 @@ def solve_coefficient_request(request: dict) -> dict:
             'status_label': 'Optimal solution found.',
             'objective_value': result.target_value,
             'variable_values': decision_values,
-            'step_count': len(steps),
+            'step_count': phase_counts['total'],
+            'phase_counts': phase_counts,
             'steps': [
-                encode_step(index, step)
-                for index, step in enumerate(steps, start=1)
+                encode_step(index, step, phase, phase_iteration)
+                for index, (step, phase, phase_iteration) in enumerate(tagged_steps, start=1)
             ],
         }
     except LPError as error:

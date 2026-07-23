@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +10,18 @@
   <body>
     <div class="page">
       <header>
-        <h1>Simplex Method Solver</h1>
-        <p class="subtitle">Advanced Optimization Course Project</p>
-        <p class="identity">
+        <div class="header-top">
+          <div class="header-text">
+            <h1 id="page-title">Simplex Method Solver</h1>
+            <p id="page-subtitle" class="subtitle">Advanced Optimization Course Project</p>
+          </div>
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" id="lang-en" class="lang-btn active" aria-pressed="true">English</button>
+            <span class="lang-sep" aria-hidden="true">|</span>
+            <button type="button" id="lang-fa" class="lang-btn" aria-pressed="false">فارسی</button>
+          </div>
+        </div>
+        <p id="page-identity" class="identity">
           Developed by Masoud Vosoughi<br>
           Instructor: Mohsen Rostami Mal Khalife<br>
           Islamic Azad University, Science and Research Branch<br>
@@ -22,53 +31,73 @@
 
       <div class="layout">
         <section class="panel" aria-labelledby="input-heading">
-          <h2 id="input-heading">Problem Input</h2>
+          <h2 id="input-heading" data-i18n="problemInput">Problem Input</h2>
 
           <div class="radio-group">
-            <span>Optimization:</span>
-            <label><input type="radio" name="optimization" value="max" checked> Maximize</label>
-            <label><input type="radio" name="optimization" value="min"> Minimize</label>
+            <span id="optimization-label" data-i18n="optimization">Optimization:</span>
+            <label><input type="radio" name="optimization" value="max" checked> <span data-i18n="maximize">Maximize</span></label>
+            <label><input type="radio" name="optimization" value="min"> <span data-i18n="minimize">Minimize</span></label>
           </div>
 
           <div class="form-row">
             <label class="field">
-              Decision variables
+              <span data-i18n="decisionVariables">Decision variables</span>
               <input id="num-vars" type="number" min="1" max="20" value="2">
             </label>
             <label class="field">
-              Constraints
+              <span data-i18n="constraints">Constraints</span>
               <input id="num-constraints" type="number" min="1" max="20" value="3">
             </label>
           </div>
 
-          <div id="objective-grid" class="table-wrap"></div>
-          <div id="constraint-grid" class="table-wrap"></div>
+          <div id="objective-grid" class="table-wrap math-ltr"></div>
+          <div id="constraint-grid" class="table-wrap math-ltr"></div>
+
+          <section id="problem-preview-section" class="problem-preview" aria-labelledby="preview-heading">
+            <h3 id="preview-heading" data-i18n="problemPreview">Problem Preview</h3>
+            <pre id="problem-preview" class="math-ltr" aria-live="polite"></pre>
+          </section>
 
           <div class="form-row">
             <label class="field">
-              Load example
+              <span data-i18n="loadExample">Load example</span>
               <select id="example-select"></select>
             </label>
           </div>
 
           <div class="actions">
-            <button id="solve-btn" class="primary" type="button">Solve</button>
-            <button id="clear-btn" class="secondary" type="button">Clear</button>
-            <button id="load-example-btn" class="secondary" type="button">Load Example</button>
+            <button id="solve-btn" class="primary" type="button" data-i18n="solve">Solve</button>
+            <button id="new-problem-btn" class="secondary" type="button" data-i18n="newProblem">New Problem</button>
+            <button id="load-example-btn" class="secondary" type="button" data-i18n="loadExampleBtn">Load Example</button>
           </div>
         </section>
 
-        <section class="panel" aria-labelledby="output-heading">
-          <h2 id="output-heading">Results</h2>
+        <section class="panel results-panel" aria-labelledby="output-heading">
+          <h2 id="output-heading" data-i18n="results">Results</h2>
           <div id="status-box"></div>
-          <div id="result-summary">
-            <p class="empty-state">No results yet.</p>
+
+          <div class="results-layout">
+            <div id="result-summary" class="result-summary">
+              <p class="empty-state" data-i18n="noResults">No results yet.</p>
+            </div>
+
+            <section id="feasible-region-section" class="feasible-region" aria-labelledby="feasible-heading">
+              <h3 id="feasible-heading" data-i18n="feasibleRegion">Feasible Region</h3>
+              <div id="feasible-region-viz" class="feasible-viz math-ltr" aria-label="Feasible region chart"></div>
+              <p id="feasible-region-note" class="viz-note" hidden></p>
+            </section>
           </div>
+
+          <div id="iteration-controls" class="iteration-controls" hidden>
+            <button id="expand-all-btn" type="button" class="secondary" data-i18n="expandAll">Expand All</button>
+            <button id="collapse-all-btn" type="button" class="secondary" data-i18n="collapseAll">Collapse All</button>
+          </div>
+
           <div id="steps-container"></div>
         </section>
       </div>
 
-      <footer>
+      <footer id="page-footer">
         Simplex Method Solver — Advanced Optimization Course Project
       </footer>
     </div>

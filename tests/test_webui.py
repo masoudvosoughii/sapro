@@ -313,10 +313,16 @@ def test_html_contains_required_controls_and_identity():
     html = body.decode('utf-8')
     for token in [
         'id="solve-btn"',
-        'id="clear-btn"',
+        'id="new-problem-btn"',
         'id="load-example-btn"',
         'id="num-vars"',
         'id="num-constraints"',
+        'id="problem-preview"',
+        'id="expand-all-btn"',
+        'id="collapse-all-btn"',
+        'id="lang-en"',
+        'id="lang-fa"',
+        'id="feasible-region-viz"',
         'Simplex Method Solver',
         'Advanced Optimization Course Project',
         'Developed by Masoud Vosoughi',
