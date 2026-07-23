@@ -26,6 +26,21 @@ Run `sapro solve -h` for more info.
 
 ## GUI Usage
 
+The offline web interface runs locally and does not require an internet connection. It supports English and Persian, assumes non-negative decision variables, and accepts Maximize, Minimize, `<=`, `>=`, and `=` constraints. Two-variable feasible-region visualization is available when exactly two decision variables are used.
+
+Activate the project environment and launch the server:
+
+```bash
+source .venv/bin/activate
+sapro webui --open
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5678
+```
+
 `sapro` exposes a demo web GUI using `wsgiref`. To launch the WSGI server, use the following command:
 ```
 $ sapro webui --open
