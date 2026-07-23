@@ -1,8 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
 
-project_root = Path(SPECPATH).resolve().parent.parent
-sapro_root = project_root / 'src' / 'sapro'
+SPEC_DIR = Path(SPECPATH).resolve()
+PROJECT_ROOT = SPEC_DIR.parent
+SRC_DIR = PROJECT_ROOT / 'src'
+LAUNCHER = SRC_DIR / 'sapro' / 'launcher.py'
+
+if not LAUNCHER.is_file():
+    raise FileNotFoundError(f'Launcher script not found: {LAUNCHER}')
+
+sapro_root = SRC_DIR / 'sapro'
 
 datas = [
     (str(sapro_root / 'index.html'), 'sapro'),
@@ -11,8 +18,8 @@ datas = [
 ]
 
 a = Analysis(
-    [str(sapro_root / 'launcher.py')],
-    pathex=[str(project_root / 'src')],
+    [str(LAUNCHER)],
+    pathex=[str(SRC_DIR)],
     binaries=[],
     datas=datas,
     hiddenimports=[],
