@@ -1,0 +1,23 @@
+Simplex Method Solver
+
+1. Extract this ZIP file.
+2. Open the extracted folder.
+3. Double-click SimplexSolver.exe.
+4. Wait for your browser to open.
+5. Keep the black application window open while using the solver.
+6. Close the black window when finished.
+
+No internet connection is required.
+No Python installation is required.
+
+License and attribution:
+This application is distributed under the MIT License.
+Copyright (c) 2025 origamizyt
+See LICENSE for the full license text.
+
+Simplex Method Solver is an advanced optimization course project developed by
+Masoud Vosoughi under the instruction of Mohsen Rostami Mal Khalife at the
+Islamic Azad University, Science and Research Branch.
+
+The underlying sapro simplex solver library is based on the open-source sapro
+project by origamizyt.

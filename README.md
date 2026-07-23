@@ -50,6 +50,33 @@ Press Ctrl+C to quit.
 
 Open `http://localhost:5678` in your browser to use the interface.
 
+## Portable Windows build
+
+The Windows desktop application is built through GitHub Actions and distributed as a ZIP archive. The ZIP does not require Python or an internet connection.
+
+To obtain a build:
+
+1. Open the repository on GitHub.
+2. Go to **Actions** → **Build Windows Simplex Application**.
+3. Click **Run workflow** and wait for the job to finish.
+4. Download the **Simplex-Solver-Windows** artifact.
+
+To use the downloaded build:
+
+1. Extract the ZIP file.
+2. Open the extracted folder.
+3. Double-click `SimplexSolver.exe`.
+4. Keep the console window open while using the application.
+5. Close the console window when finished.
+
+The application runs locally at `http://127.0.0.1:5678` by default and works fully offline. See `START_HERE.txt` in the distribution folder for the same instructions.
+
+Developers can also run the portable launcher directly in Python:
+
+```bash
+python -m sapro.launcher
+```
+
 To use a custom host and port, specify the `-H` and `-p` arguments:
 ```
 $ sapro webui -H 127.0.0.1 -p 8080
