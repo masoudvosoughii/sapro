@@ -1,0 +1,34 @@
+name: Build Windows Simplex Application
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Build Windows distribution
+        shell: pwsh
+        run: ./packaging/build-windows.ps1
+
+      - name: Upload Windows ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simplex-Solver-Windows
+          path: Simplex-Solver-Windows.zip
+          retention-days: 30
