@@ -1,38 +1,42 @@
 from __future__ import annotations
 
-from .webui import run_app
-import socket
+from .webui import application
 import sys
-import threading
-import time
 import webbrowser
+from wsgiref.simple_server import make_server
 
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 5678
-PORT_RANGE = 10
+MAX_PORT = 5687
 
 
 class LauncherError(Exception):
     'Raised when the packaged application cannot start.'
 
 
-def select_port(host: str = DEFAULT_HOST, preferred: int = DEFAULT_PORT, count: int = PORT_RANGE) -> int:
+def create_server_with_fallback(
+    app,
+    host: str = DEFAULT_HOST,
+    preferred_port: int = DEFAULT_PORT,
+    max_port: int = MAX_PORT,
+):
     '''
-    Return the first available TCP port in a small local range.
+    Create a WSGI server on the first bindable port in the requested range.
+
+    Each candidate port is attempted with the actual ``make_server`` call so the
+    returned server instance is the one that will serve requests.
     '''
     last_error: OSError | None = None
-    for port in range(preferred, preferred + count):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            try:
-                sock.bind((host, port))
-            except OSError as error:
-                last_error = error
-                continue
-            return port
+    for port in range(preferred_port, max_port + 1):
+        try:
+            server = make_server(host, port, app)
+        except OSError as error:
+            last_error = error
+            continue
+        return server, port
+
     message = (
-        f'Could not bind to a local port in the range '
-        f'{preferred}-{preferred + count - 1}. '
+        f'Could not bind to a local port in the range {preferred_port}-{max_port}. '
         'Close other applications using these ports and try again.'
     )
     if last_error is not None:
@@ -54,10 +58,16 @@ def print_startup_message(url: str) -> None:
 def run_launcher(
     host: str = DEFAULT_HOST,
     preferred_port: int = DEFAULT_PORT,
+    max_port: int = MAX_PORT,
     open_browser: bool = True,
 ) -> int:
     try:
-        port = select_port(host, preferred_port, PORT_RANGE)
+        server, port = create_server_with_fallback(
+            application,
+            host=host,
+            preferred_port=preferred_port,
+            max_port=max_port,
+        )
     except LauncherError as error:
         print(f'Startup error: {error}', file=sys.stderr)
         return 1
@@ -65,39 +75,11 @@ def run_launcher(
     url = application_url(host, port)
     print_startup_message(url)
 
-    server_error: LauncherError | None = None
-
-    def serve() -> None:
-        nonlocal server_error
-        try:
-            run_app(host, port)
-        except OSError as error:
-            server_error = LauncherError(f'Could not start the local server ({error}).')
-        except Exception as error:  # pragma: no cover - defensive startup guard
-            server_error = LauncherError(f'Unexpected startup failure ({error}).')
-
-    thread = threading.Thread(target=serve, daemon=True)
-    thread.start()
-
-    deadline = time.time() + 5.0
-    while time.time() < deadline:
-        if server_error is not None:
-            print(f'Startup error: {server_error}', file=sys.stderr)
-            return 1
-        if not thread.is_alive():
-            break
-        time.sleep(0.05)
-
-    if server_error is not None:
-        print(f'Startup error: {server_error}', file=sys.stderr)
-        return 1
-
     if open_browser:
         webbrowser.open(url, new=2)
 
     try:
-        while thread.is_alive():
-            time.sleep(0.25)
+        server.serve_forever()
     except KeyboardInterrupt:
         pass
 
