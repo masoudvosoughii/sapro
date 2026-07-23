@@ -18,15 +18,14 @@ from wsgiref.util import FileWrapper
 import json
 import os
 
+from .resources import index_html_path, static_asset_path
+
 MAX_DIMENSION = 20
 VALID_OPERATORS = {'<=', '>=', '=='}
 STATIC_CONTENT_TYPES = {
     '.css': 'text/css; charset=utf-8',
     '.js': 'application/javascript; charset=utf-8',
 }
-
-_PACKAGE_DIR = os.path.dirname(__file__)
-_STATIC_DIR = os.path.join(_PACKAGE_DIR, 'static')
 
 INTERNAL_ERROR_RESPONSE = {
     'ok': False,
@@ -330,7 +329,7 @@ def application(environ, start_response):
     if method == 'GET' and path == '/':
         return _file_response(
             start_response,
-            os.path.join(_PACKAGE_DIR, 'index.html'),
+            str(index_html_path()),
             'text/html; charset=utf-8',
         )
 
@@ -340,11 +339,11 @@ def application(environ, start_response):
         if extension not in STATIC_CONTENT_TYPES:
             start_response(_http_status_line(HTTPStatus.NOT_FOUND), [])
             return []
-        asset_path = os.path.join(_STATIC_DIR, filename)
-        if not os.path.isfile(asset_path):
+        asset_path = static_asset_path(filename)
+        if not asset_path.is_file():
             start_response(_http_status_line(HTTPStatus.NOT_FOUND), [])
             return []
-        return _file_response(start_response, asset_path, STATIC_CONTENT_TYPES[extension])
+        return _file_response(start_response, str(asset_path), STATIC_CONTENT_TYPES[extension])
 
     if method == 'POST' and path == '/api/solve':
         try:
