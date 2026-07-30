@@ -12,13 +12,20 @@ from __future__ import annotations
 
 import json
 import math
+import platform
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
-from sapro.webui import solve_coefficient_request
+import numpy as np
+
+from sapro.error import LPError
+from sapro.webui import build_simplex_problem, collect_tagged_steps, map_lp_error, solve_coefficient_request
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = REPO_ROOT / 'web' / 'fixtures'
+FIXTURE_SCHEMA_VERSION = 1
 
 BUILTIN_EXAMPLES: dict[str, dict[str, Any]] = {
     'readme': {
@@ -122,6 +129,64 @@ def export_fixture(name: str, request: dict[str, Any], output_dir: Path) -> Path
     return output_path
 
 
+def _error_response(error: LPError) -> dict[str, Any]:
+    status, error_type, message = map_lp_error(error)
+    return {
+        'ok': False,
+        'status': status,
+        'error_type': error_type,
+        'message': message,
+    }
+
+
+def export_iteration_limit_fixture(output_dir: Path) -> Path:
+    request = BUILTIN_EXAMPLES['readme']
+    problem = build_simplex_problem(request)
+    problem.max_iterations = 2
+    try:
+        collect_tagged_steps(problem)
+    except LPError as error:
+        response = _error_response(error)
+    else:
+        raise RuntimeError('expected iteration limit fixture to fail with IterationLimit')
+
+    payload = {
+        'name': 'iteration_limit_readme',
+        'request': request,
+        'response': response,
+    }
+    output_path = output_dir / 'iteration_limit_readme.json'
+    output_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + '\n',
+        encoding='utf-8',
+    )
+    return output_path
+
+
+def _git_head() -> str:
+    try:
+        return subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'],
+            cwd=REPO_ROOT,
+            text=True,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return 'unknown'
+
+
+def write_export_metadata(exported: list[str]) -> Path:
+    meta = {
+        'fixture_schema_version': FIXTURE_SCHEMA_VERSION,
+        'source_commit': _git_head(),
+        'python_version': platform.python_version(),
+        'numpy_version': np.__version__,
+        'fixtures': sorted(exported),
+    }
+    output_path = FIXTURES_DIR / '_export_meta.json'
+    output_path.write_text(json.dumps(meta, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+    return output_path
+
+
 def main() -> None:
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
     exported: list[str] = []
@@ -148,6 +213,11 @@ def main() -> None:
         encoding='utf-8',
     )
     exported.append('repeated_solve_readme')
+
+    export_iteration_limit_fixture(FIXTURES_DIR)
+    exported.append('iteration_limit_readme')
+
+    write_export_metadata(exported)
 
     print(f'Exported {len(exported)} fixtures to {FIXTURES_DIR}:')
     for name in exported:

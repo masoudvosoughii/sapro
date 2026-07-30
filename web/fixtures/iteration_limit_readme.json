@@ -1,0 +1,42 @@
+{
+  "name": "iteration_limit_readme",
+  "request": {
+    "constraints": [
+      {
+        "coefficients": [
+          1,
+          1
+        ],
+        "operator": "<=",
+        "rhs": 4
+      },
+      {
+        "coefficients": [
+          -2,
+          1
+        ],
+        "operator": "<=",
+        "rhs": 1
+      },
+      {
+        "coefficients": [
+          1,
+          0
+        ],
+        "operator": "<=",
+        "rhs": 3
+      }
+    ],
+    "objective": [
+      1,
+      2
+    ],
+    "optimization": "max"
+  },
+  "response": {
+    "error_type": "IterationLimit",
+    "message": "Phase II exceeded iteration limit after 2 pivots (max_iterations=2)",
+    "ok": false,
+    "status": "iteration_limit"
+  }
+}

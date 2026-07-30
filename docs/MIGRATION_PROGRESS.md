@@ -54,8 +54,40 @@
 6. No root npm workspaces; Node tooling stays in `web/`
 7. No `404.html` SPA fallback unless client-side routing is introduced
 
-### Recommended Checkpoint 2 scope
+## Checkpoint 2 — Mathematical foundation
 
-- Port algebra, constraint normalization, linear algebra helpers, and tableau formatting
-- Begin Simplex engine port with fixture-driven Vitest parity tests (semantic + numeric tolerance)
-- Still no UI wiring, PWA, or GitHub Pages deployment
+**Status:** Complete
+
+### Scope delivered
+
+- Typed solver error model with separate transport mapping
+- Algebra port (`Variable`, `Expression`, `Constraint`, normalization)
+- Dense matrix implementation with Gauss-Jordan inversion (partial pivoting)
+- Numerical helpers centralized around `DEFAULT_EPSILON = 1e-9`
+- Tableau numeric storage with formatted `string[][]` output
+- `ftoa` / `formatTable` display utilities
+- Vitest parity comparison helpers
+- Focused unit tests for all foundation components
+- Iteration-limit fixture exported via `build_simplex_problem` + `max_iterations`
+- Stable fixture export metadata in `web/fixtures/_export_meta.json`
+
+### Explicitly not in Checkpoint 2
+
+- Simplex solve loop, Phase I/II, pivot selection, ratio tests, dual repair
+- UI connection
+- PWA / GitHub Pages deployment
+- Playwright e2e
+
+### Deferred fixtures
+
+- **Numerical failure:** not exported. Python tests trigger this via internal
+  `_apply_pivot` with a constructed near-zero pivot matrix, which is not
+  reachable deterministically through the public coefficient-table API or
+  `solve_coefficient_request()` path without modifying runtime code.
+
+### Recommended Checkpoint 3 scope
+
+- Port Simplex engine orchestration (two-phase, dual repair, pivot path)
+- Wire `solveProblem()` to the TS engine
+- Achieve fixture-driven semantic parity for all committed oracle cases
+- Still no PWA/Pages deployment

@@ -16,7 +16,7 @@ function loadJson(fileName: string): unknown {
 
 describe('parity fixture schema', () => {
   const fixtureFiles = readdirSync(FIXTURES_DIR)
-    .filter((fileName) => fileName.endsWith('.json'))
+    .filter((fileName) => fileName.endsWith('.json') && !fileName.startsWith('_'))
     .sort();
 
   it('exports at least the built-in example set', () => {
