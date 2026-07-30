@@ -1,0 +1,173 @@
+name: Deploy Sapro PWA to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,packaging]"
+
+      - name: Run Python tests
+        run: python -m pytest -v --tb=short
+
+      - name: Run Python tests (RuntimeWarning as error)
+        run: python -m pytest -W error::RuntimeWarning --tb=short
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: TypeScript typecheck
+        working-directory: web
+        run: npm run typecheck
+
+      - name: ESLint
+        working-directory: web
+        run: npm run lint
+
+      - name: Vitest
+        working-directory: web
+        run: npm test
+
+      - name: Vitest coverage
+        working-directory: web
+        run: npm run test:coverage
+
+      - name: Production build
+        working-directory: web
+        run: npm run build
+
+      - name: Inspect production artifact
+        working-directory: web
+        run: bash ../.github/scripts/inspect-dist.sh dist
+
+      - name: Install Playwright browsers
+        working-directory: web
+        run: |
+          npx playwright install --with-deps chromium firefox webkit || \
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Playwright E2E
+        working-directory: web
+        env:
+          CI: 'true'
+        run: npm run test:e2e
+
+      - name: Upload Playwright diagnostics
+        if: failure() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics-build
+          path: |
+            web/playwright-report/
+            web/test-results/
+          retention-days: 7
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  post-deploy-smoke:
+    name: Post-deploy smoke
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Wait for hosted site propagation
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: bash .github/scripts/wait-for-pages.sh "$PAGE_URL"
+
+      - name: Verify hosted static assets
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: bash .github/scripts/verify-hosted-assets.sh "$PAGE_URL"
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: |
+          npx playwright install --with-deps chromium || \
+          npx playwright install --with-deps chromium
+
+      - name: Deployed Playwright smoke
+        working-directory: web
+        env:
+          CI: 'true'
+          E2E_BASE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: npm run test:e2e:deployed
+
+      - name: Upload Playwright diagnostics
+        if: failure() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics-deploy
+          path: |
+            web/playwright-report/
+            web/test-results/
+          retention-days: 7
