@@ -328,6 +328,30 @@ footer {
   font-size: 12px;
 }
 
+.pwa-update-banner {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.pwa-update-banner p {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+}
+
+.pwa-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
   .layout,
   .results-layout {

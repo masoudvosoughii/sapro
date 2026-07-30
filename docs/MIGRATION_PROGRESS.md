@@ -155,3 +155,99 @@ HEAD moved.
 - Add `vite-plugin-pwa` with offline precache and safe update strategy
 - Add GitHub Pages deploy workflow with `/sapro/` base and SPA 404 fallback
 - Add Playwright e2e for offline install, base path, and browser parity smoke tests
+
+## Checkpoint 5 — PWA and Playwright browser verification
+
+**Status:** Complete (awaiting review; not committed)
+
+### Baseline at start
+
+| Item | Value |
+| --- | --- |
+| Branch | `feat/site-pwa` |
+| Baseline commit | `53a9e37d8ed03727dc5b46fdf955f0d87c9fb924` |
+| Python tests | 211 passed |
+| TypeScript tests (pre-PWA) | 147 passed |
+
+### PWA architecture
+
+- **Plugin:** `vite-plugin-pwa` v1.x with **`generateSW`** (Workbox)
+- **Registration:** manual via `virtual:pwa-register` in `web/src/pwa/register.ts`
+- **Update strategy:** `registerType: 'prompt'` — shows a small accessible banner;
+  reload occurs only when the user clicks **Update** (no automatic `controllerchange` reload)
+- **Offline guarantee:** after one online visit to `/sapro/`, precached HTML/JS/CSS/manifest/icons
+  allow full solver operation with `BrowserContext.setOffline(true)` — no HTTP API, no Python
+- **Scope:** service worker, manifest, and assets are rooted at `/sapro/`
+
+### Manifest values
+
+| Field | Value |
+| --- | --- |
+| `name` | Sapro Simplex Solver |
+| `short_name` | Sapro |
+| `description` | Offline linear programming solver using the Simplex method. |
+| `display` | standalone |
+| `orientation` | any |
+| `theme_color` | `#245bdb` |
+| `background_color` | `#f4f5f7` |
+| `lang` | en |
+| `dir` | ltr |
+| `start_url` | `/sapro/` |
+| `scope` | `/sapro/` |
+
+### Icons
+
+Deterministic PNG generation via `web/scripts/generate-icons.mjs` (uses `pngjs`, accent triangle motif):
+
+| File | Dimensions |
+| --- | --- |
+| `public/icons/icon-192.png` | 192×192 |
+| `public/icons/icon-512.png` | 512×512 |
+| `public/icons/icon-512-maskable.png` | 512×512 (maskable safe zone) |
+| `public/favicon.png` | 32×32 |
+
+Vitest test `tests/pwa-icons.test.ts` verifies PNG signatures and dimensions.
+
+### Playwright setup
+
+- Config: `web/playwright.config.ts`
+- Tests: `web/e2e/smoke.spec.ts` (Chromium via system Chrome, Firefox, WebKit) and
+  `web/e2e/pwa/offline.spec.ts` (Chromium PWA/offline only)
+- **Production server:** `npm run build && npm run preview -- --host 127.0.0.1 --port 4173`
+- Scripts: `npm run test:e2e`, `npm run test:e2e:headed`
+
+#### Local PWA testing
+
+```bash
+cd web
+npm ci
+npm run generate:icons   # only needed when icon script changes
+npm run build
+npx playwright install chromium firefox webkit
+# If Playwright CDN is geo-blocked:
+# PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright/ npx playwright install chromium firefox webkit
+npm run test:e2e
+```
+
+Chromium projects use **`channel: 'chrome'`** (system Google Chrome) when Playwright's
+bundled Chromium CDN is unavailable.
+
+### Browser limitations
+
+- **Native install prompt** (`beforeinstallprompt`) is **not** asserted — only manifest,
+  icons, service-worker registration, and offline functionality
+- **No `404.html` SPA fallback** — single-page app with no client-side routing; only `/sapro/` exists
+- **No GitHub Pages deployment** in this checkpoint (deferred to Checkpoint 6)
+
+### Explicitly not in Checkpoint 5
+
+- GitHub Pages workflow or deployment
+- `404.html` fallback
+- `injectManifest` or custom service worker source
+- UI redesign or solver changes
+
+### Recommended Checkpoint 6 scope
+
+- Add `.github/workflows/deploy-pages.yml` for GitHub Pages at `/sapro/`
+- CI browser installation (`playwright install`) with mirror fallback if needed
+- Post-deploy smoke verification

@@ -9,19 +9,24 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "echo \"Playwright e2e tests are planned for Checkpoint 3+\" && exit 0",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "generate:icons": "node scripts/generate-icons.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.55.0",
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.0.8",
     "eslint": "^9.39.1",
     "jsdom": "^26.1.0",
+    "pngjs": "^7.0.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.2",
+    "vite-plugin-pwa": "^1.0.3",
     "vitest": "^4.0.8"
   }
 }
