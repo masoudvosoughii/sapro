@@ -251,3 +251,84 @@ bundled Chromium CDN is unavailable.
 - Add `.github/workflows/deploy-pages.yml` for GitHub Pages at `/sapro/`
 - CI browser installation (`playwright install`) with mirror fallback if needed
 - Post-deploy smoke verification
+
+## Checkpoint 6 — GitHub Pages CI/CD
+
+**Status:** Complete (awaiting review; not committed)
+
+### Baseline at start
+
+| Item | Value |
+| --- | --- |
+| Branch | `feat/site-pwa` |
+| Baseline commit | `ef0fa38f9accf781406407cbba8ad74e3c3dad07` |
+| Python tests | 211 passed |
+| TypeScript tests | 147 passed |
+| Local Playwright | 50 passed |
+
+### Workflow
+
+| Item | Value |
+| --- | --- |
+| File | `.github/workflows/deploy-pages.yml` |
+| Name | Deploy Sapro PWA to GitHub Pages |
+| Trigger | **`workflow_dispatch` only** |
+| Automatic push deployment | **Not enabled** (deferred until merge to `simplex-project`) |
+| Concurrency | `group: pages`, `cancel-in-progress: false` |
+| Artifact uploaded | **`web/dist` only** |
+| Expected hosted URL | `https://masoudvosoughii.github.io/sapro/` |
+
+### Jobs
+
+1. **build** — Python 3.13 + Node 22 tests, production build, artifact inspection,
+   Playwright E2E, configure/upload Pages artifact
+2. **deploy** — `actions/deploy-pages@v4` to `github-pages` environment
+3. **post-deploy-smoke** — HTTP retries + `npm run test:e2e:deployed` against
+   `${{ needs.deploy.outputs.page_url }}`
+
+### Action versions
+
+- `actions/checkout@v6`
+- `actions/setup-python@v6`
+- `actions/setup-node@v6`
+- `actions/configure-pages@v5`
+- `actions/upload-pages-artifact@v4`
+- `actions/deploy-pages@v4`
+- `actions/upload-artifact@v4` (Playwright diagnostics on failure, 7-day retention)
+
+### Deployed Playwright smoke
+
+- File: `web/e2e/deployed.spec.ts`
+- Script: `npm run test:e2e:deployed`
+- Env: `E2E_BASE_URL` (from deploy job output; no local preview server)
+- Browser: Chromium only, one worker in CI, clean contexts
+
+### Manual GitHub Pages enablement (required)
+
+Cursor cannot change repository settings. After pushing the workflow:
+
+1. **Settings → Pages → Build and deployment → Source → GitHub Actions**
+2. **Actions → Deploy Sapro PWA to GitHub Pages → Run workflow → Branch: `feat/site-pwa`**
+
+Deployment is not active until both steps are completed.
+
+### Explicitly not in Checkpoint 6
+
+- Merge of `feat/site-pwa` into `simplex-project`
+- Automatic deployment on push
+- `404.html` SPA fallback
+- Changes to Python solver, packaging, or Windows workflow
+
+### Recommended post-merge step (future)
+
+After PWA acceptance and merge to `simplex-project`, add:
+
+```yaml
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - simplex-project
+```
+
+Only after explicit final acceptance.

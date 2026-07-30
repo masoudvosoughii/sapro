@@ -50,6 +50,81 @@ Press Ctrl+C to quit.
 
 Open `http://localhost:5678` in your browser to use the interface.
 
+## Static PWA (TypeScript / GitHub Pages)
+
+The repository also contains a **browser-only Progressive Web App** under `web/`.
+It runs the Simplex solver entirely in JavaScript, works offline after the first
+visit, and is intended for hosting at:
+
+```text
+https://masoudvosoughii.github.io/sapro/
+```
+
+The Python GUI above remains the **legacy/reference desktop implementation** until
+final project acceptance. It is not removed or deprecated in this branch.
+
+### Local PWA development
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+Open the URL shown by Vite (development base path `/`).
+
+### Local production preview
+
+```bash
+cd web
+npm ci
+npm run build
+npm run preview -- --host 127.0.0.1
+```
+
+Open `http://127.0.0.1:4173/sapro/`.
+
+### Web tests
+
+```bash
+cd web
+npm ci
+npm run typecheck
+npm run lint
+npm test
+npm run test:coverage
+npm run build
+npx playwright install chromium firefox webkit
+npm run test:e2e
+```
+
+If Playwright browser downloads fail because of regional CDN restrictions, retry
+the official install command once. Do not permanently redirect CI to third-party
+browser mirrors.
+
+### PWA offline behavior
+
+1. Build and preview (or deploy) the production site at `/sapro/`.
+2. Open the app once while online so the service worker precaches assets.
+3. The solver continues to work offline with no `/api/solve` request and no Python runtime.
+
+Updates use a small in-app prompt. The page reloads only when you choose **Update**.
+
+### GitHub Pages deployment (manual)
+
+Deployment is **manual** while the PWA branch is under review:
+
+1. Push the workflow on branch `feat/site-pwa`.
+2. In GitHub: **Settings → Pages → Build and deployment → Source → GitHub Actions**.
+3. Run **Actions → Deploy Sapro PWA to GitHub Pages → Run workflow** on branch `feat/site-pwa`.
+
+Automatic deployment from the default branch (`simplex-project`) will be enabled
+only after the PWA branch is accepted and merged.
+
+The workflow runs Python tests, web tests, Playwright E2E, uploads only `web/dist`,
+deploys to the `github-pages` environment, and runs post-deploy smoke checks against
+the real hosted URL.
+
 ## Portable Windows build
 
 The Windows desktop application is built through GitHub Actions and distributed as a ZIP archive. The ZIP does not require Python or an internet connection.
