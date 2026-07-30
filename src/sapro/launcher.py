@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .webui import application
+from sapro.webui import application
 import sys
 import webbrowser
 from wsgiref.simple_server import make_server
