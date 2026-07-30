@@ -46,8 +46,13 @@ if ! grep -q '/simplex-solver/assets/' "${DIST_DIR}/index.html"; then
 fi
 
 MANIFEST="${DIST_DIR}/manifest.webmanifest"
-if ! grep -q '"/simplex-solver/"' "${MANIFEST}" && ! grep -q '"/sapro"' "${MANIFEST}"; then
+if ! grep -q '"/simplex-solver/"' "${MANIFEST}"; then
   echo "manifest start_url/scope must use /simplex-solver/" >&2
+  exit 1
+fi
+
+if grep -q '/sapro/' "${DIST_DIR}/index.html" "${MANIFEST}" "${DIST_DIR}/sw.js" 2>/dev/null; then
+  echo "Legacy /sapro/ path detected in production artifact" >&2
   exit 1
 fi
 
