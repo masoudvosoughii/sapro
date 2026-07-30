@@ -40,14 +40,14 @@ if [[ "${JS_COUNT}" -lt 1 || "${CSS_COUNT}" -lt 1 ]]; then
   exit 1
 fi
 
-if ! grep -q '/sapro/assets/' "${DIST_DIR}/index.html"; then
-  echo "index.html does not reference /sapro/assets/" >&2
+if ! grep -q '/simplex-solver/assets/' "${DIST_DIR}/index.html"; then
+  echo "index.html does not reference /simplex-solver/assets/" >&2
   exit 1
 fi
 
 MANIFEST="${DIST_DIR}/manifest.webmanifest"
-if ! grep -q '"/sapro/"' "${MANIFEST}" && ! grep -q '"/sapro"' "${MANIFEST}"; then
-  echo "manifest start_url/scope must use /sapro/" >&2
+if ! grep -q '"/simplex-solver/"' "${MANIFEST}" && ! grep -q '"/sapro"' "${MANIFEST}"; then
+  echo "manifest start_url/scope must use /simplex-solver/" >&2
   exit 1
 fi
 
@@ -86,9 +86,9 @@ if find "${DIST_DIR}" -type d \( -name 'playwright-report' -o -name 'test-result
   exit 1
 fi
 
-# Guard against root-level /assets/ references in index.html (should be /sapro/assets/)
+# Guard against root-level /assets/ references in index.html (should be /simplex-solver/assets/)
 if grep -qE 'href="/assets/|src="/assets/' "${DIST_DIR}/index.html"; then
-  echo "index.html references root-level /assets/ instead of /sapro/assets/" >&2
+  echo "index.html references root-level /assets/ instead of /simplex-solver/assets/" >&2
   exit 1
 fi
 

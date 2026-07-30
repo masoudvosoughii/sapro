@@ -22,13 +22,13 @@
 | `npm run typecheck` | pass |
 | `npm run lint` | pass |
 | `npm test` | 13 passed |
-| `npm run build` | pass (`base: /sapro/` in production) |
+| `npm run build` | pass (`base: /simplex-solver/` in production) |
 | `git diff --check` | clean |
 
 ### Scope delivered
 
 - Minimal `web/` Vite + Vanilla TypeScript scaffold (strict TS, Vitest, ESLint)
-- GitHub Pages production base path `/sapro/` configured at Vite build time
+- GitHub Pages production base path `/simplex-solver/` configured at Vite build time
 - `tools/export_parity_fixtures.py` exports Python solver reference fixtures
 - Committed fixtures under `web/fixtures/`
 - Vitest fixture schema validation tests
@@ -153,7 +153,7 @@ HEAD moved.
 ### Recommended Checkpoint 5 scope
 
 - Add `vite-plugin-pwa` with offline precache and safe update strategy
-- Add GitHub Pages deploy workflow with `/sapro/` base and SPA 404 fallback
+- Add GitHub Pages deploy workflow with `/simplex-solver/` base and SPA 404 fallback
 - Add Playwright e2e for offline install, base path, and browser parity smoke tests
 
 ## Checkpoint 5 — PWA and Playwright browser verification
@@ -175,9 +175,9 @@ HEAD moved.
 - **Registration:** manual via `virtual:pwa-register` in `web/src/pwa/register.ts`
 - **Update strategy:** `registerType: 'prompt'` — shows a small accessible banner;
   reload occurs only when the user clicks **Update** (no automatic `controllerchange` reload)
-- **Offline guarantee:** after one online visit to `/sapro/`, precached HTML/JS/CSS/manifest/icons
+- **Offline guarantee:** after one online visit to `/simplex-solver/`, precached HTML/JS/CSS/manifest/icons
   allow full solver operation with `BrowserContext.setOffline(true)` — no HTTP API, no Python
-- **Scope:** service worker, manifest, and assets are rooted at `/sapro/`
+- **Scope:** service worker, manifest, and assets are rooted at `/simplex-solver/`
 
 ### Manifest values
 
@@ -192,8 +192,8 @@ HEAD moved.
 | `background_color` | `#f4f5f7` |
 | `lang` | en |
 | `dir` | ltr |
-| `start_url` | `/sapro/` |
-| `scope` | `/sapro/` |
+| `start_url` | `/simplex-solver/` |
+| `scope` | `/simplex-solver/` |
 
 ### Icons
 
@@ -236,7 +236,7 @@ bundled Chromium CDN is unavailable.
 
 - **Native install prompt** (`beforeinstallprompt`) is **not** asserted — only manifest,
   icons, service-worker registration, and offline functionality
-- **No `404.html` SPA fallback** — single-page app with no client-side routing; only `/sapro/` exists
+- **No `404.html` SPA fallback** — single-page app with no client-side routing; only `/simplex-solver/` exists
 - **No GitHub Pages deployment** in this checkpoint (deferred to Checkpoint 6)
 
 ### Explicitly not in Checkpoint 5
@@ -248,7 +248,7 @@ bundled Chromium CDN is unavailable.
 
 ### Recommended Checkpoint 6 scope
 
-- Add `.github/workflows/deploy-pages.yml` for GitHub Pages at `/sapro/`
+- Add `.github/workflows/deploy-pages.yml` for GitHub Pages at `/simplex-solver/`
 - CI browser installation (`playwright install`) with mirror fallback if needed
 - Post-deploy smoke verification
 
@@ -276,7 +276,7 @@ bundled Chromium CDN is unavailable.
 | Automatic push deployment | **Not enabled** (deferred until merge to `simplex-project`) |
 | Concurrency | `group: pages`, `cancel-in-progress: false` |
 | Artifact uploaded | **`web/dist` only** |
-| Expected hosted URL | `https://masoudvosoughii.github.io/sapro/` |
+| Expected hosted URL | `https://masoudvosoughii.github.io/simplex-solver/` |
 
 ### Jobs
 

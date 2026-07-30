@@ -71,7 +71,7 @@ function createConfig(): PlaywrightTestConfig {
     ],
     webServer: {
       command: `npm run build && npm run preview -- --host ${HOST} --port ${String(PORT)}`,
-      url: `${PREVIEW_BASE_URL}/sapro/`,
+      url: `${PREVIEW_BASE_URL}/simplex-solver/`,
       reuseExistingServer: !process.env['CI'],
       timeout: 120_000,
     },

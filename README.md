@@ -57,7 +57,7 @@ It runs the Simplex solver entirely in JavaScript, works offline after the first
 visit, and is intended for hosting at:
 
 ```text
-https://masoudvosoughii.github.io/sapro/
+https://masoudvosoughii.github.io/simplex-solver/
 ```
 
 The Python GUI above remains the **legacy/reference desktop implementation** until
@@ -82,7 +82,7 @@ npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:4173/sapro/`.
+Open `http://127.0.0.1:4173/simplex-solver/`.
 
 ### Web tests
 
@@ -104,7 +104,7 @@ browser mirrors.
 
 ### PWA offline behavior
 
-1. Build and preview (or deploy) the production site at `/sapro/`.
+1. Build and preview (or deploy) the production site at `/simplex-solver/`.
 2. Open the app once while online so the service worker precaches assets.
 3. The solver continues to work offline with no `/api/solve` request and no Python runtime.
 

@@ -19,14 +19,14 @@ check_url "icons/icon-512.png"
 check_url "icons/icon-512-maskable.png"
 
 HTML="$(curl --fail --silent --show-error --location --max-time 20 "${PAGE_URL}")"
-if ! grep -q '/sapro/assets/' <<<"${HTML}" && ! grep -q 'assets/' <<<"${HTML}"; then
+if ! grep -q '/simplex-solver/assets/' <<<"${HTML}" && ! grep -q 'assets/' <<<"${HTML}"; then
   echo "Hosted index HTML missing bundled asset references" >&2
   exit 1
 fi
 
 MANIFEST="$(curl --fail --silent --show-error --location --max-time 20 "${PAGE_URL}manifest.webmanifest")"
-if ! grep -q '"/sapro/"' <<<"${MANIFEST}" && ! grep -q '/sapro/' <<<"${MANIFEST}"; then
-  echo "Hosted manifest missing /sapro/ start_url or scope" >&2
+if ! grep -q '"/simplex-solver/"' <<<"${MANIFEST}" && ! grep -q '/simplex-solver/' <<<"${MANIFEST}"; then
+  echo "Hosted manifest missing /simplex-solver/ start_url or scope" >&2
   exit 1
 fi
 

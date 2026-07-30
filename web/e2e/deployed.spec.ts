@@ -24,7 +24,7 @@ test.describe('deployed GitHub Pages smoke', () => {
     await expectReadmeSolution(page);
   });
 
-  test('manifest is reachable and service worker scope is under /sapro/', async ({ page, baseURL }) => {
+  test('manifest is reachable and service worker scope is under /simplex-solver/', async ({ page, baseURL }) => {
     await page.goto('./');
     const manifestUrl = new URL('manifest.webmanifest', baseURL ?? './').toString();
     const manifestResponse = await page.request.get(manifestUrl);
@@ -34,15 +34,15 @@ test.describe('deployed GitHub Pages smoke', () => {
       start_url?: string;
       scope?: string;
     };
-    expect(manifest.start_url ?? '').toContain('/sapro/');
-    expect(manifest.scope ?? '').toContain('/sapro/');
+    expect(manifest.start_url ?? '').toContain('/simplex-solver/');
+    expect(manifest.scope ?? '').toContain('/simplex-solver/');
 
     await waitForControllingServiceWorker(page);
     const scope = await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
       return registration?.scope ?? '';
     });
-    expect(scope).toContain('/sapro/');
+    expect(scope).toContain('/simplex-solver/');
   });
 
   test('readme example solves offline after precache', async ({ browser }) => {

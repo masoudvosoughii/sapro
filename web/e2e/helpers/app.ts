@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export const APP_PATH = '/sapro/';
+export const APP_PATH = '/simplex-solver/';
 
 export async function gotoApp(page: Page): Promise<void> {
   const response = await page.goto(APP_PATH);

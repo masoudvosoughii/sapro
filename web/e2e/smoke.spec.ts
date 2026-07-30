@@ -152,7 +152,7 @@ test.describe('network safety during solve', () => {
     expect(apiLikeRequests).toEqual([]);
   });
 
-  test('loads production assets beneath /sapro/', async ({ page }) => {
+  test('loads production assets beneath /simplex-solver/', async ({ page }) => {
     const assetUrls: string[] = [];
     page.on('response', (response) => {
       const url = response.url();
@@ -164,13 +164,13 @@ test.describe('network safety during solve', () => {
     await gotoApp(page);
     expect(assetUrls.length).toBeGreaterThan(0);
     for (const url of assetUrls) {
-      expect(url).toContain('/sapro/');
+      expect(url).toContain('/simplex-solver/');
       expect(url).not.toMatch(/^https?:\/\/127\.0\.0\.1:\d+\/assets\//);
     }
   });
 });
 
-test('base path index responds at /sapro/', async ({ page }) => {
+test('base path index responds at /simplex-solver/', async ({ page }) => {
   const response = await page.goto(APP_PATH);
   expect(response?.status()).toBe(200);
   await expect(page.locator('#solve-btn')).toBeVisible();

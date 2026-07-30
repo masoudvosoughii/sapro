@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-const PRODUCTION_BASE = '/sapro/';
+const PRODUCTION_BASE = '/simplex-solver/';
 
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';

@@ -11,7 +11,7 @@ import {
 
 test.describe.configure({ mode: 'serial' });
 
-test('registers service worker with /sapro/ scope', async ({ browser }) => {
+test('registers service worker with /simplex-solver/ scope', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -30,8 +30,8 @@ test('registers service worker with /sapro/ scope', async ({ browser }) => {
     });
 
     expect(registration).not.toBeNull();
-    expect(registration?.scope).toContain('/sapro/');
-    expect(registration?.scriptUrl).toContain('/sapro/');
+    expect(registration?.scope).toContain('/simplex-solver/');
+    expect(registration?.scriptUrl).toContain('/simplex-solver/');
   } finally {
     await context.close();
   }
@@ -46,7 +46,7 @@ test('manifest link resolves with required installability fields', async ({ brow
 
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     expect(manifestHref).toBeTruthy();
-    expect(manifestHref).toContain('/sapro/');
+    expect(manifestHref).toContain('/simplex-solver/');
 
     const manifestResponse = await page.request.get(String(manifestHref));
     expect(manifestResponse.ok()).toBeTruthy();
@@ -57,8 +57,8 @@ test('manifest link resolves with required installability fields', async ({ brow
     expect(manifest['display']).toBe('standalone');
     expect(manifest['theme_color']).toBe('#245bdb');
     expect(manifest['background_color']).toBe('#f4f5f7');
-    expect(manifest['start_url']).toContain('/sapro/');
-    expect(manifest['scope']).toContain('/sapro/');
+    expect(manifest['start_url']).toContain('/simplex-solver/');
+    expect(manifest['scope']).toContain('/simplex-solver/');
 
     const icons = manifest['icons'] as Array<{ sizes?: string; type?: string; purpose?: string }>;
     expect(icons.some((icon) => icon.sizes === '192x192')).toBe(true);
@@ -70,7 +70,7 @@ test('manifest link resolves with required installability fields', async ({ brow
       expect(iconPath).toBeTruthy();
       const iconUrl = iconPath?.startsWith('http')
         ? iconPath
-        : new URL(String(iconPath), `${String(page.url().split('/sapro/')[0])}/sapro/`).toString();
+        : new URL(String(iconPath), `${String(page.url().split('/simplex-solver/')[0])}/simplex-solver/`).toString();
       const iconResponse = await page.request.get(iconUrl);
       expect(iconResponse.ok()).toBeTruthy();
       expect(iconResponse.headers()['content-type']).toContain('image/png');
@@ -118,7 +118,7 @@ test('production bundle contains no developer-machine absolute paths', async ({ 
     const responses: string[] = [];
     page.on('response', async (response) => {
       const url = response.url();
-      if (url.includes('/sapro/assets/') && url.endsWith('.js')) {
+      if (url.includes('/simplex-solver/assets/') && url.endsWith('.js')) {
         responses.push(await response.text());
       }
     });
@@ -135,7 +135,7 @@ test('production bundle contains no developer-machine absolute paths', async ({ 
   }
 });
 
-test('service worker and manifest URLs stay under /sapro/', async ({ browser }) => {
+test('service worker and manifest URLs stay under /simplex-solver/', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const urls: string[] = [];
@@ -153,14 +153,14 @@ test('service worker and manifest URLs stay under /sapro/', async ({ browser }) 
         url.includes('manifest') ||
         url.includes('sw') ||
         url.includes('workbox') ||
-        url.includes('/sapro/assets/') ||
-        url.includes('/sapro/icons/'),
+        url.includes('/simplex-solver/assets/') ||
+        url.includes('/simplex-solver/icons/'),
     );
     expect(relevant.length).toBeGreaterThan(0);
     for (const url of relevant) {
-      expect(url).toContain('/sapro/');
+      expect(url).toContain('/simplex-solver/');
     }
-    expect(urls.some((url) => url.match(/\/assets\//) && !url.includes('/sapro/'))).toBe(false);
+    expect(urls.some((url) => url.match(/\/assets\//) && !url.includes('/simplex-solver/'))).toBe(false);
   } finally {
     await context.close();
   }
