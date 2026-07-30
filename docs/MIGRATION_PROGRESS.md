@@ -85,9 +85,28 @@
   reachable deterministically through the public coefficient-table API or
   `solve_coefficient_request()` path without modifying runtime code.
 
-### Recommended Checkpoint 3 scope
+## Checkpoint 3 — Simplex engine and solveProblem()
 
-- Port Simplex engine orchestration (two-phase, dual repair, pivot path)
-- Wire `solveProblem()` to the TS engine
-- Achieve fixture-driven semantic parity for all committed oracle cases
-- Still no PWA/Pages deployment
+**Status:** Complete
+
+### Scope delivered
+
+- Full Simplex engine port with two-phase, dual repair, cycle detection, iteration limits
+- `parseCoefficientRequest()` validation mirroring Python web UI
+- `buildSimplexProblem()` with fresh slack generators per request
+- `collectTaggedSteps()` orchestration with phase metadata
+- `solveProblem()` wired to in-memory solver (no fetch/DOM)
+- Fixture-driven parity tests for all committed oracle fixtures
+- Validation, regression, mutation-safety, and numerical-failure tests
+
+### Explicitly not in Checkpoint 3
+
+- UI connection to `index.html` / legacy `app.js`
+- PWA / GitHub Pages deployment
+- Playwright e2e
+
+### Recommended Checkpoint 4 scope
+
+- Port legacy UI modules to TypeScript and connect to `solveProblem()`
+- Preserve DOM structure, copy, and feasible-region SVG behavior
+- Still no PWA/Pages until UI parity is proven
