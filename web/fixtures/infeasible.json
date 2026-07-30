@@ -1,0 +1,42 @@
+{
+  "name": "infeasible",
+  "request": {
+    "constraints": [
+      {
+        "coefficients": [
+          1,
+          0
+        ],
+        "operator": ">=",
+        "rhs": 5
+      },
+      {
+        "coefficients": [
+          0,
+          1
+        ],
+        "operator": ">=",
+        "rhs": 5
+      },
+      {
+        "coefficients": [
+          1,
+          1
+        ],
+        "operator": "<=",
+        "rhs": 1
+      }
+    ],
+    "objective": [
+      1,
+      1
+    ],
+    "optimization": "max"
+  },
+  "response": {
+    "error_type": "Unsolvable",
+    "message": "The problem has no feasible solution.",
+    "ok": false,
+    "status": "infeasible"
+  }
+}

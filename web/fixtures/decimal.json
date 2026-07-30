@@ -1,0 +1,128 @@
+{
+  "name": "decimal",
+  "request": {
+    "constraints": [
+      {
+        "coefficients": [
+          1.5,
+          1
+        ],
+        "operator": "<=",
+        "rhs": 4
+      },
+      {
+        "coefficients": [
+          1,
+          0
+        ],
+        "operator": "<=",
+        "rhs": 2
+      }
+    ],
+    "objective": [
+      2.5,
+      1.5
+    ],
+    "optimization": "max"
+  },
+  "response": {
+    "objective_value": 6.5,
+    "ok": true,
+    "phase_counts": {
+      "phase_one": 0,
+      "phase_two": 2,
+      "total": 2
+    },
+    "status": "optimal",
+    "status_label": "Optimal solution found.",
+    "step_count": 2,
+    "steps": [
+      {
+        "enter": "x1",
+        "index": 1,
+        "leave": "s4",
+        "phase": "phase_two",
+        "phase_iteration": 1,
+        "tableau": [
+          [
+            "BV",
+            "x1",
+            "x2",
+            "s3",
+            "s4",
+            "RHS"
+          ],
+          [
+            "s3",
+            "0",
+            "1",
+            "1",
+            "-3/2",
+            "1"
+          ],
+          [
+            "x1",
+            "1",
+            "0",
+            "0",
+            "1",
+            "2"
+          ],
+          [
+            "",
+            "0",
+            "3/2",
+            "0",
+            "-5/2",
+            "z-5"
+          ]
+        ]
+      },
+      {
+        "enter": "x2",
+        "index": 2,
+        "leave": "s3",
+        "phase": "phase_two",
+        "phase_iteration": 2,
+        "tableau": [
+          [
+            "BV",
+            "x1",
+            "x2",
+            "s3",
+            "s4",
+            "RHS"
+          ],
+          [
+            "x2",
+            "0",
+            "1",
+            "1",
+            "-3/2",
+            "1"
+          ],
+          [
+            "x1",
+            "1",
+            "0",
+            "0",
+            "1",
+            "2"
+          ],
+          [
+            "",
+            "0",
+            "0",
+            "-3/2",
+            "-1/4",
+            "z-13/2"
+          ]
+        ]
+      }
+    ],
+    "variable_values": {
+      "x1": 2.0,
+      "x2": 1.0
+    }
+  }
+}

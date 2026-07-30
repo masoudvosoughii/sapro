@@ -1,0 +1,68 @@
+{
+  "name": "equality",
+  "request": {
+    "constraints": [
+      {
+        "coefficients": [
+          1,
+          1
+        ],
+        "operator": "==",
+        "rhs": 4
+      }
+    ],
+    "objective": [
+      1,
+      1
+    ],
+    "optimization": "max"
+  },
+  "response": {
+    "objective_value": 4.0,
+    "ok": true,
+    "phase_counts": {
+      "phase_one": 1,
+      "phase_two": 0,
+      "total": 1
+    },
+    "status": "optimal",
+    "status_label": "Optimal solution found.",
+    "step_count": 1,
+    "steps": [
+      {
+        "enter": "x1",
+        "index": 1,
+        "leave": "u1",
+        "phase": "phase_one",
+        "phase_iteration": 1,
+        "tableau": [
+          [
+            "BV",
+            "x1",
+            "x2",
+            "u1",
+            "RHS"
+          ],
+          [
+            "x1",
+            "1",
+            "1",
+            "1",
+            "4"
+          ],
+          [
+            "",
+            "0",
+            "0",
+            "1",
+            "z+0"
+          ]
+        ]
+      }
+    ],
+    "variable_values": {
+      "x1": 4.0,
+      "x2": 0
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "negative_rhs",
+  "request": {
+    "constraints": [
+      {
+        "coefficients": [
+          1
+        ],
+        "operator": ">=",
+        "rhs": -5
+      },
+      {
+        "coefficients": [
+          1
+        ],
+        "operator": "<=",
+        "rhs": 3
+      }
+    ],
+    "objective": [
+      1
+    ],
+    "optimization": "max"
+  },
+  "response": {
+    "objective_value": 3.0,
+    "ok": true,
+    "phase_counts": {
+      "phase_one": 0,
+      "phase_two": 1,
+      "total": 1
+    },
+    "status": "optimal",
+    "status_label": "Optimal solution found.",
+    "step_count": 1,
+    "steps": [
+      {
+        "enter": "x1",
+        "index": 1,
+        "leave": "s3",
+        "phase": "phase_two",
+        "phase_iteration": 1,
+        "tableau": [
+          [
+            "BV",
+            "x1",
+            "s2",
+            "s3",
+            "RHS"
+          ],
+          [
+            "s2",
+            "0",
+            "1",
+            "1",
+            "8"
+          ],
+          [
+            "x1",
+            "1",
+            "0",
+            "1",
+            "3"
+          ],
+          [
+            "",
+            "0",
+            "0",
+            "-1",
+            "z-3"
+          ]
+        ]
+      }
+    ],
+    "variable_values": {
+      "x1": 3.0
+    }
+  }
+}
