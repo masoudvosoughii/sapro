@@ -1,15 +1,92 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simplex Solver (PWA migration scaffold)</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplex Method Solver</title>
+    <link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A">
   </head>
   <body>
-    <main id="app">
-      <h1>Simplex Solver</h1>
-      <p>TypeScript PWA scaffold. Solver port not connected in Checkpoint 1.</p>
-    </main>
+    <div class="page">
+      <header>
+        <h1>Simplex Method Solver</h1>
+        <p class="subtitle">Advanced Optimization Course Project</p>
+        <p class="identity">
+          Developed by Masoud Vosoughi<br>
+          Instructor: Mohsen Rostami Mal Khalife<br>
+          Islamic Azad University, Science and Research Branch<br>
+          Faculty of Converging Sciences and Technologies
+        </p>
+      </header>
+
+      <div class="layout">
+        <section class="panel" aria-labelledby="input-heading">
+          <h2 id="input-heading">Problem Input</h2>
+
+          <div class="radio-group">
+            <span>Optimization:</span>
+            <label><input type="radio" name="optimization" value="max" checked> Maximize</label>
+            <label><input type="radio" name="optimization" value="min"> Minimize</label>
+          </div>
+
+          <div class="form-row">
+            <label class="field">
+              Decision variables
+              <input id="num-vars" type="number" min="1" max="20" value="2">
+            </label>
+            <label class="field">
+              Constraints
+              <input id="num-constraints" type="number" min="1" max="20" value="3">
+            </label>
+          </div>
+
+          <div id="objective-grid" class="table-wrap math-ltr"></div>
+          <div id="constraint-grid" class="table-wrap math-ltr"></div>
+
+          <section id="problem-preview-section" class="problem-preview" aria-labelledby="preview-heading">
+            <h3 id="preview-heading">Problem Preview</h3>
+            <pre id="problem-preview" class="math-ltr" aria-live="polite"></pre>
+          </section>
+
+          <div class="form-row">
+            <label class="field">
+              Load example
+              <select id="example-select"></select>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button id="solve-btn" class="primary" type="button">Solve</button>
+            <button id="new-problem-btn" class="secondary" type="button">New Problem</button>
+            <button id="load-example-btn" class="secondary" type="button">Load Example</button>
+          </div>
+        </section>
+
+        <section class="panel results-panel" aria-labelledby="output-heading">
+          <h2 id="output-heading">Results</h2>
+          <div id="status-box"></div>
+
+          <div class="results-layout">
+            <div id="result-summary" class="result-summary">
+              <p class="empty-state">No results yet.</p>
+            </div>
+
+            <section id="feasible-region-section" class="feasible-region" aria-labelledby="feasible-heading">
+              <h3 id="feasible-heading">Feasible Region</h3>
+              <div id="feasible-region-viz" class="feasible-viz math-ltr" aria-label="Feasible region chart"></div>
+              <p id="feasible-region-note" class="viz-note" hidden></p>
+            </section>
+          </div>
+
+          <div id="steps-container"></div>
+        </section>
+      </div>
+
+      <footer>
+        Simplex Method Solver — Advanced Optimization Course Project
+      </footer>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

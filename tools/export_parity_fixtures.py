@@ -177,7 +177,6 @@ def _git_head() -> str:
 def write_export_metadata(exported: list[str]) -> Path:
     meta = {
         'fixture_schema_version': FIXTURE_SCHEMA_VERSION,
-        'source_commit': _git_head(),
         'python_version': platform.python_version(),
         'numpy_version': np.__version__,
         'fixtures': sorted(exported),

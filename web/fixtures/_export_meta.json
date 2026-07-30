@@ -14,6 +14,5 @@
     "unbounded"
   ],
   "numpy_version": "2.5.1",
-  "python_version": "3.14.3",
-  "source_commit": "39dd7cf5e73c4f8e9cf09ccd8091b921518f7b5c"
+  "python_version": "3.14.3"
 }
